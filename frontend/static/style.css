@@ -1,0 +1,197 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins', sans-serif;
+    background:#eef2f7;
+    color:#2c3e50;
+}
+
+/* =========================
+   AUTH PAGES
+========================= */
+
+.auth-page{
+
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    flex-direction:column;
+
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(
+        135deg,
+        #3498db,
+        #2c3e50
+    );
+}
+
+.auth-page h1{
+
+    color:white;
+
+    margin-bottom:25px;
+
+    font-size:42px;
+}
+
+.auth-page form{
+
+    background:white;
+
+    padding:40px;
+
+    border-radius:20px;
+
+    width:350px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,0.2);
+}
+
+.auth-page label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+}
+
+.auth-page input{
+
+    width:100%;
+
+    padding:14px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+    margin-bottom:18px;
+
+    font-size:16px;
+}
+
+.auth-page button{
+
+    width:100%;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#3498db;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.3s;
+}
+
+.auth-page button:hover{
+
+    background:#2980b9;
+}
+
+.auth-page p{
+
+    color:white;
+
+    margin-top:20px;
+}
+
+.auth-page a{
+
+    color:#f1c40f;
+
+    text-decoration:none;
+
+    font-weight:bold;
+}
+
+/* =========================
+   WELCOME PAGE
+========================= */
+
+.welcome-page{
+
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(
+        135deg,
+        #3498db,
+        #2c3e50
+    );
+}
+
+.welcome-box{
+
+    text-align:center;
+
+    color:white;
+}
+
+.welcome-box img{
+
+    width:130px;
+
+    margin-bottom:20px;
+}
+
+.welcome-box h1{
+
+    font-size:64px;
+
+    margin-bottom:10px;
+}
+
+.welcome-box p{
+
+    font-size:24px;
+
+    margin-bottom:35px;
+}
+
+.welcome-btn{
+
+    display:inline-block;
+
+    background:white;
+
+    color:#2c3e50;
+
+    padding:16px 40px;
+
+    border-radius:50px;
+
+    text-decoration:none;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    transition:0.3s;
+}
+
+.welcome-btn:hover{
+
+    transform:scale(1.05);
+}

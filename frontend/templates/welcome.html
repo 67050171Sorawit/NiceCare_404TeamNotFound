@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>NiceCare</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial;
+        }
+
+        body{
+
+            background:linear-gradient(
+                135deg,
+                #3498db,
+                #2c3e50
+            );
+
+            height:100vh;
+
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+
+        .box{
+
+            background:white;
+
+            width:420px;
+
+            padding:50px;
+
+            border-radius:30px;
+
+            text-align:center;
+
+            box-shadow:0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .logo{
+
+            width:140px;
+            margin-bottom:20px;
+        }
+
+        h1{
+
+            color:#1e293b;
+
+            font-size:50px;
+
+            margin-bottom:10px;
+        }
+
+        p{
+
+            color:#64748b;
+
+            font-size:20px;
+
+            margin-bottom:40px;
+        }
+
+        .btn{
+
+            background:#2563eb;
+
+            color:white;
+
+            padding:15px 40px;
+
+            border-radius:50px;
+
+            text-decoration:none;
+
+            font-size:20px;
+
+            font-weight:bold;
+
+            transition:0.3s;
+
+            display:inline-block;
+        }
+
+        .btn:hover{
+
+            background:#1d4ed8;
+
+            transform:scale(1.05);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="box">
+
+        <img
+            src="{{ url_for('static', filename='logo.png') }}"
+            class="logo"
+        >
+
+        <h1>NiceCare</h1>
+
+        <p>
+            AI Elderly Monitoring System
+        </p>
+
+        <a href="/login" class="btn">
+            Get Started
+        </a>
+
+    </div>
+
+</body>
+</html>

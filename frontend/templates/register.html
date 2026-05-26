@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | NiceCare</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <main class="auth-page">
+
+    <h1>Create Account</h1>
+
+    <form action="/register_user" method="POST">
+
+      <label>Username</label>
+      <input
+        name="username"
+        type="text"
+        required
+      />
+
+      <label>Password</label>
+      <input
+        name="password"
+        type="password"
+        required
+      />
+
+      <label>Camera URL</label>
+      <input
+        name="camera_url"
+        type="text"
+        placeholder="Optional"
+      />
+
+      <button type="submit">
+        Register
+      </button>
+
+    </form>
+
+    <p>
+      Already have an account?
+      <a href="/login">Login</a>
+    </p>
+
+  </main>
+
+</body>
+</html>

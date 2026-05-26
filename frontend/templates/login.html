@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login | NiceCare</title>
+
+  <link rel="stylesheet" href="/static/style.css" />
+
+</head>
+
+<body>
+
+  <main class="auth-page">
+
+    <h1>Login</h1>
+
+    <form action="/dashboard" method="POST">
+
+      <label>Username</label>
+
+      <input
+        name="username"
+        type="text"
+        required
+      />
+
+      <label>Password</label>
+
+      <input
+        name="password"
+        type="password"
+        required
+      />
+
+      <button type="submit">
+        Sign In
+      </button>
+
+    </form>
+
+    <p>
+      New to NiceCare?
+      <a href="/register">Register</a>
+    </p>
+
+  </main>
+
+</body>
+</html>
