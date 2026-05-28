@@ -30,6 +30,12 @@ pose = mp_pose.Pose()
 
 cap = cv2.VideoCapture(0)
 
+# =========================
+# FALL VARIABLES
+# =========================
+
+previous_diff_y = 1.0
+
 while True:
 
     success, frame = cap.read()
@@ -66,9 +72,14 @@ while True:
 
         diff_y = abs(shoulder.y - hip.y)
 
-        # ถ้าลำตัวแนวนอนเกินไป
-        if diff_y < 0.1:
+        # ความเร็วการเปลี่ยนท่า
+        movement_speed = abs(previous_diff_y - diff_y)
+
+        # FALL LOGIC
+        if diff_y < 0.1 and movement_speed > 0.05:
             fall_status = "FALL DETECTED"
+
+        previous_diff_y = diff_y
 
         # =========================
         # SEND TO FIREBASE
@@ -84,13 +95,18 @@ while True:
         # SHOW STATUS
         # =========================
 
+        color = (0, 255, 0)
+
+        if fall_status == "FALL DETECTED":
+            color = (0, 0, 255)
+
         cv2.putText(
             frame,
             fall_status,
             (30, 50),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            (0, 0, 255),
+            color,
             3
         )
 
