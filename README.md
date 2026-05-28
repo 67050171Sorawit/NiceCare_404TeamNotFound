@@ -9,6 +9,25 @@
 | สรวิชญ์ คูหะมณี | Data / AI Developer |
 | ทิพย์อาภา จริยวงศ์พรหม | Embedded / IoT Developer |
 
+## Integration Map (แผนภาพการเชื่อมระบบ)
+| ส่วน | คำตอบของทีม |
+| --- | --- |
+| Input คืออะไร | Motion Sensor / Push Button |
+| Component 1 | ESP32 อ่านค่าจาก sensor |
+| Component 2 | micro-ROS Publisher ส่งข้อมูลเข้า ROS2 Topic |
+| Component 3 | ROS2 Subscriber รับค่าและแสดงผล |
+| Output คืออะไร | Serial Monitor / Dashboard แสดงสถานะ |
+
+# Integration Map ของทีม (เขียนเป็น flow สั้น ๆ):
+Motion Sensor → ESP32 → micro-ROS Publisher → ROS2 Topic (/motion_status) → Subscriber Node → Serial Monitor / Dashboard
+
+## Scope Cut Table
+
+| Must Finish for Demo | Can Demo with Workaround | Cut for Sprint 3 |
+| --- | --- | --- |
+| Dashboard สำหรับดูสถานะ  |  ถ้า deploy มีปัญหา ใช้ localhost demo ในเครื่องแทน | Multiple Camera Support |
+| ระบบตรวจจับการล้มด้วย AI | ถ้า realtime มีปัญหา ใช้ auto refresh หน้าเว็บแทน | ระบบแจ้งเตือน (Notification) |
+
 ## NiceCare Prototype v1 — Current Capabilities
 ระบบตอนนี้ทำอะไรได้บ้าง
 1. AI Pose Detection
