@@ -12,14 +12,14 @@
 ## Integration Map (แผนภาพการเชื่อมระบบ)
 | ส่วน | คำตอบของทีม |
 | --- | --- |
-| Input คืออะไร | Motion Sensor / Push Button |
+| Input คืออะไร | กล้อง Webcam + Motion Detection |
 | Component 1 | ESP32 อ่านค่าจาก sensor |
-| Component 2 | micro-ROS Publisher ส่งข้อมูลเข้า ROS2 Topic |
-| Component 3 | ROS2 Subscriber รับค่าและแสดงผล |
-| Output คืออะไร | Serial Monitor / Dashboard แสดงสถานะ |
+| Component 2 | Firebase Realtime Database→ |
+| Component 3 | Flask Dashboard Web Application |
+| Output คืออะไร | Dashboard แสดงสถานะ FALL DETECTED แบบ Realtime |
 
 ## Integration Map ของทีม (เขียนเป็น flow สั้น ๆ):
-Motion Sensor → ESP32 → micro-ROS Publisher → ROS2 Topic (/motion_status) → Subscriber Node → Serial Monitor / Dashboard
+Camera/Webcam → AI Fall Detection (MediaPipe + OpenCV) → Firebase Realtime Database → Flask Backend → Dashboard UI (Realtime Monitoring)
 
 ## Scope Cut Table
 
