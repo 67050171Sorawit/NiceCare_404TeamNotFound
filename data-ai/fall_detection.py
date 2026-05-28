@@ -9,7 +9,7 @@ from firebase_admin import db
 # FIREBASE
 # =========================
 
-cred = credentials.Certificate("firebase_key.json")
+cred = credentials.Certificate("Backend/firebase_key.json")
 
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://nice-care-4fa00-default-rtdb.asia-southeast1.firebasedatabase.app/'
