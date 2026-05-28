@@ -5,6 +5,12 @@ import mediapipe as mp
 import math
 
 # =========================
+# FIREBASE IMPORT
+# =========================
+import firebase_admin
+from firebase_admin import credentials, db
+
+# =========================
 # FLASK CONFIG
 # =========================
 app = Flask(
@@ -34,6 +40,15 @@ def create_db():
     conn.close()
 
 create_db()
+
+# =========================
+# FIREBASE SETUP
+# =========================
+cred = credentials.Certificate("firebase_key.json")
+
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://nice-care-4fa00-default-rtdb.asia-southeast1.firebasedatabase.app/'
+})
 
 # =========================
 # WELCOME PAGE
@@ -92,6 +107,17 @@ def register_user():
 def dashboard():
 
     # =====================
+    # GET FALL STATUS
+    # =====================
+    ref = db.reference('/fall_status')
+    data = ref.get()
+
+    fall_status = "NORMAL"
+
+    if data and 'status' in data:
+        fall_status = data['status']
+
+    # =====================
     # LOGIN
     # =====================
     if request.method == 'POST':
@@ -126,7 +152,7 @@ def dashboard():
                 'index.html',
                 username=username,
                 camera_status="ONLINE",
-                fall_status="NORMAL",
+                fall_status=fall_status,
                 alerts=alerts
             )
 
@@ -151,7 +177,7 @@ def dashboard():
             'index.html',
             username="Guest",
             camera_status="ONLINE",
-            fall_status="NORMAL",
+            fall_status=fall_status,
             alerts=alerts
         )
 
