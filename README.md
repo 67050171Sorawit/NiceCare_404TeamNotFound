@@ -18,7 +18,7 @@
 | Component 3 | ROS2 Subscriber รับค่าและแสดงผล |
 | Output คืออะไร | Serial Monitor / Dashboard แสดงสถานะ |
 
-# Integration Map ของทีม (เขียนเป็น flow สั้น ๆ):
+## Integration Map ของทีม (เขียนเป็น flow สั้น ๆ):
 Motion Sensor → ESP32 → micro-ROS Publisher → ROS2 Topic (/motion_status) → Subscriber Node → Serial Monitor / Dashboard
 
 ## Scope Cut Table
