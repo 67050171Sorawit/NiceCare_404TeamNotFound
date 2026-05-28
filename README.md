@@ -14,7 +14,7 @@
 | --- | --- |
 | Input คืออะไร | กล้อง Webcam + Motion Detection |
 | Component 1 | ESP32 อ่านค่าจาก sensor |
-| Component 2 | Firebase Realtime Database→ |
+| Component 2 | Firebase Realtime Database |
 | Component 3 | Flask Dashboard Web Application |
 | Output คืออะไร | Dashboard แสดงสถานะ FALL DETECTED แบบ Realtime |
 
