@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NiceCare Dashboard</title>
+
+    <meta http-equiv="refresh" content="2">
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .normal {
+            color: green;
+        }
+
+        .fall {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>NiceCare Dashboard</h1>
+
+    {% if status == "FALL DETECTED" %}
+        <h2 class="fall">{{ status }}</h2>
+    {% else %}
+        <h2 class="normal">{{ status }}</h2>
+    {% endif %}
+
+    <h3>Last Update: {{ time }}</h3>
+
+</body>
+
+</html>

@@ -1,7 +1,9 @@
 import cv2
 import mediapipe as mp
-
 import firebase_admin
+import time
+
+from datetime import datetime
 from firebase_admin import credentials
 from firebase_admin import db
 
@@ -9,7 +11,7 @@ from firebase_admin import db
 # FIREBASE
 # =========================
 
-cred = credentials.Certificate("Backend/firebase_key.json")
+cred = credentials.Certificate("backend/firebase_key.json")
 
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://nice-care-4fa00-default-rtdb.asia-southeast1.firebasedatabase.app/'
@@ -35,6 +37,13 @@ cap = cv2.VideoCapture(0)
 # =========================
 
 previous_diff_y = 1.0
+last_status = "NORMAL"
+last_fall_time = 0
+fall_detected_until = 0
+
+# =========================
+# MAIN LOOP
+# =========================
 
 while True:
 
@@ -72,12 +81,25 @@ while True:
 
         diff_y = abs(shoulder.y - hip.y)
 
-        # ความเร็วการเปลี่ยนท่า
+        # movement speed
         movement_speed = abs(previous_diff_y - diff_y)
+
+        current_time = time.time()
 
         # FALL LOGIC
         if diff_y < 0.1 and movement_speed > 0.05:
+
+            # cooldown 5 sec
+            if current_time - last_fall_time > 5:
+
+                fall_detected_until = current_time + 5
+                last_fall_time = current_time
+
+        # keep FALL DETECTED for 5 sec
+        if current_time < fall_detected_until:
             fall_status = "FALL DETECTED"
+        else:
+            fall_status = "NORMAL"
 
         previous_diff_y = diff_y
 
@@ -85,11 +107,18 @@ while True:
         # SEND TO FIREBASE
         # =========================
 
-        ref = db.reference('/fall_status')
+        if fall_status != last_status:
 
-        ref.set({
-            'status': fall_status
-        })
+            ref = db.reference('/fall_status')
+
+            ref.set({
+                'status': fall_status,
+                'time': datetime.now().strftime("%H:%M:%S")
+            })
+
+            print("SEND:", fall_status)
+
+            last_status = fall_status
 
         # =========================
         # SHOW STATUS

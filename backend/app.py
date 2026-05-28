@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
 import os
-import mediapipe as mp
-import math
 
 # =========================
 # FIREBASE IMPORT
@@ -112,10 +110,18 @@ def dashboard():
     ref = db.reference('/fall_status')
     data = ref.get()
 
-    fall_status = "NORMAL"
+    print(data)
 
-    if data and 'status' in data:
-        fall_status = data['status']
+    fall_status = "NORMAL"
+    fall_time = "-"
+
+    if data:
+
+        if 'status' in data:
+            fall_status = data['status']
+
+        if 'time' in data:
+            fall_time = data['time']
 
     # =====================
     # LOGIN
@@ -153,6 +159,7 @@ def dashboard():
                 username=username,
                 camera_status="ONLINE",
                 fall_status=fall_status,
+                fall_time=fall_time,
                 alerts=alerts
             )
 
@@ -178,6 +185,7 @@ def dashboard():
             username="Guest",
             camera_status="ONLINE",
             fall_status=fall_status,
+            fall_time=fall_time,
             alerts=alerts
         )
 
