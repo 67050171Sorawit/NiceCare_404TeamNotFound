@@ -52,5 +52,28 @@ Camera
 สามารถ demo การตรวจจับการล้มได้ แสดง realtime status ได้
 
 ## Demo link
-Demo link:https://nicecare-404teamnotfound.onrender.com/
-Backup evidence:https://drive.google.com/drive/folders/1cLpCQ9PU3f_upouqT-Q17N-U3uF_Ho2a?usp=sharing
+Demo link:https : //nicecare-404teamnotfound.onrender.com/
+Backup evidence : https://drive.google.com/drive/folders/1cLpCQ9PU3f_upouqT-Q17N-U3uF_Ho2a?usp=sharing
+
+## Known Issues / Limitations
+Known Issues / LimitationsFirebase realtime update ยังมี delay บางครั้งAI detection ยังขึ้นกับมุมกล้องและสภาพแสงHardware integration ยังไม่สมบูรณ์ระบบยังอยู่ใน prototype stage และยังไม่ได้ทดสอบกับผู้ใช้จริงจำนวนมาก
+
+## Sprint 4 Test Plan
+| หัวข้อ | คำตอบ |
+| --- | --- |
+| ผู้ใช้ที่จะทดสอบ | นักศึกษาและผู้ใช้งานทั่วไป 3–4 คน |
+| Task ที่ให้ลองทำ | ทดลองจำลองการล้มหน้ากล้อง |
+| สิ่งที่จะสังเกต | Dashboard แจ้งเตือนถูกต้องหรือไม่ |
+| วิธีเก็บ feedback | Observation และสัมภาษณ์ |
+| ตัวชี้วัดเบื้องต้น | ความแม่นยำและความเข้าใจของผู้ใช้ |
+| สิ่งที่ต้องเตรียมก่อน Test | ปรับปรุงความเสถียรของ AI และ Dashboard |
+
+## Build Log
+| รายการ | คำตอบ |
+| --- | --- |
+| สิ่งที่ทำเสร็จจริง 3 อันดับแรก | 1. AI Fall Detection ด้วย MediaPipe + OpenCV 2) เชื่อม Firebase Realtime Database 3) Dashboard แสดงสถานะ “FALL DETECTED” |
+| สิ่งที่ยังไม่เสร็จ | Hardware integration และ notification system |
+| สิ่งที่ตัดออกจาก Sprint 3 | Multiple camera support และ UI enhancement บางส่วน |
+| สิ่งที่ใช้ workaround | Auto refresh และ localhost demo |
+| blocker สำคัญที่เจอ | Firebase delay และ AI detection ยังไม่เสถียรบางมุม |
+| วิธีแก้หรือแผนรับมือ | เตรียม video backup และ mock data |
