@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NiceCare — One-Tap Call</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --border:    #252a38;
+      --teal:      #2dd4bf;
+      --teal-dim:  #1a4a45;
+      --red:       #f43f5e;
+      --red-dim:   #4a1020;
+      --text:      #e8eaf0;
+      --muted:     #6b7280;
+      --green:     #22c55e;
+      --amber:     #f59e0b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      width: 100%; max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; user-select: none;
+    }
+    .status-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      flex-shrink: 0; animation: pulse-dot 2s infinite;
+    }
+    .status-dot.fall { background: var(--red); box-shadow: 0 0 12px var(--red); }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .status-info { flex: 1; }
+    .status-label { font-size: 11px; font-family: 'IBM Plex Mono',monospace; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
+    .status-value { font-size: 15px; font-weight: 600; color: var(--text); }
+    .status-value.fall { color: var(--red); }
+    .status-time { font-family: 'IBM Plex Mono',monospace; font-size: 12px; color: var(--muted); }
+
+    /* ── Card ── */
+    .card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    .card-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-size: 13px; font-family: 'IBM Plex Mono',monospace; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+    .badge { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; font-family:'IBM Plex Mono',monospace; }
+    .badge-teal { background:var(--teal-dim); color:var(--teal); border:1px solid rgba(45,212,191,.25); }
+
+    /* ── Contacts ── */
+    .contacts { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .contact-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+      transition: border-color .2s;
+    }
+    .contact-row:hover { border-color: var(--teal-dim); }
+    .avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; background:#1e293b; }
+    .contact-info { flex:1; min-width:0; }
+    .contact-name { font-size:15px; font-weight:600; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .contact-role { font-size:12px; color:var(--muted); }
+
+    /* ── Buttons row ── */
+    .btn-group { display:flex; gap:8px; flex-shrink:0; }
+    .call-btn {
+      width:48px; height:48px; border-radius:50%; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:18px;
+      transition:transform .15s;
+    }
+    .call-btn:active { transform: scale(.9); }
+    .call-btn-green { background: linear-gradient(135deg,#16a34a,#22c55e); animation: ring-pulse 2.5s infinite; }
+    .call-btn-teal  { background: linear-gradient(135deg,#0d9488,#2dd4bf); }
+    @keyframes ring-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+      60%  { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+    .edit-btn {
+      width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
+      background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      font-size:14px; color:var(--muted); transition:border-color .2s, color .2s; align-self:center;
+    }
+    .edit-btn:hover { border-color:var(--teal); color:var(--teal); }
+    .delete-btn {
+      width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
+      background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      font-size:14px; color:var(--muted); transition:border-color .2s, color .2s; align-self:center;
+    }
+    .delete-btn:hover { border-color:var(--red); color:var(--red); }
+
+    /* ── Add contact button ── */
+    .add-btn {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; padding:12px;
+      background:transparent; border:1px dashed var(--border); border-radius:14px;
+      color:var(--muted); font-family:'IBM Plex Sans Thai',sans-serif; font-size:14px;
+      cursor:pointer; transition:border-color .2s, color .2s;
+    }
+    .add-btn:hover { border-color:var(--teal); color:var(--teal); }
+
+    /* ── Divider ── */
+    .divider { display:flex; align-items:center; gap:10px; padding:0 20px 16px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .divider span { font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; letter-spacing:.06em; white-space:nowrap; }
+
+    /* ── Emergency ── */
+    .emergency-section { padding: 0 20px 20px; }
+    .emergency-btn {
+      width:100%; padding:20px;
+      background: linear-gradient(135deg,#be123c,#f43f5e);
+      border:none; border-radius:16px; cursor:pointer;
+      color:#fff; font-family:'IBM Plex Sans Thai',sans-serif; font-size:18px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; gap:12px;
+      position:relative; overflow:hidden;
+      transition:transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(244,63,94,.4);
+    }
+    .emergency-btn::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 30% 50%,rgba(255,255,255,.12),transparent 60%); }
+    .emergency-btn:active { transform:scale(.97); box-shadow:0 2px 10px rgba(244,63,94,.3); }
+    .emergency-icon { font-size:24px; position:relative; }
+    .emergency-text { position:relative; line-height:1.2; text-align:left; }
+    .emergency-sub { display:block; font-size:12px; font-weight:400; opacity:.8; margin-top:2px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.7);
+      display:flex; align-items:center; justify-content:center;
+      padding:20px; z-index:100;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal {
+      background:var(--surface); border:1px solid var(--border); border-radius:20px;
+      padding:28px 24px; width:100%; max-width:360px;
+      transform:translateY(20px); transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .modal-overlay.open .modal { transform:translateY(0); }
+    .modal-title { font-size:16px; font-weight:700; margin-bottom:20px; }
+
+    .field { margin-bottom:16px; }
+    .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-family:'IBM Plex Mono',monospace; letter-spacing:.06em; text-transform:uppercase; }
+    .field input, .field select {
+      width:100%; padding:11px 14px;
+      background:var(--bg); border:1px solid var(--border); border-radius:10px;
+      color:var(--text); font-family:'IBM Plex Sans Thai',sans-serif; font-size:15px;
+      outline:none; transition:border-color .2s;
+    }
+    .field input:focus, .field select:focus { border-color:var(--teal); }
+    .field select option { background:var(--surface); }
+
+    .emoji-picker { display:flex; gap:8px; flex-wrap:wrap; }
+    .emoji-opt {
+      width:40px; height:40px; border-radius:10px; border:1px solid var(--border);
+      background:var(--bg); cursor:pointer; font-size:20px;
+      display:flex; align-items:center; justify-content:center;
+      transition:border-color .15s;
+    }
+    .emoji-opt.selected { border-color:var(--teal); background:var(--teal-dim); }
+
+    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .btn-cancel {
+      flex:1; padding:12px; border-radius:12px; border:1px solid var(--border);
+      background:transparent; color:var(--muted); font-family:'IBM Plex Sans Thai',sans-serif;
+      font-size:15px; cursor:pointer; transition:border-color .2s;
+    }
+    .btn-cancel:hover { border-color:var(--text); color:var(--text); }
+    .btn-save {
+      flex:1; padding:12px; border-radius:12px; border:none;
+      background:var(--teal); color:#0f1117; font-family:'IBM Plex Sans Thai',sans-serif;
+      font-size:15px; font-weight:700; cursor:pointer; transition:opacity .2s;
+    }
+    .btn-save:hover { opacity:.85; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:32px; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:#1e293b; border:1px solid var(--teal); color:var(--teal);
+      padding:12px 24px; border-radius:50px; font-size:14px; font-weight:600;
+      white-space:nowrap; transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      opacity:0; pointer-events:none; z-index:999;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    .toast.emergency { border-color:var(--red); color:var(--red); background:var(--red-dim); }
+
+    .footer-note { margin-top:16px; font-size:11px; color:var(--muted); text-align:center; font-family:'IBM Plex Mono',monospace; letter-spacing:.04em; }
+
+    .empty-state { padding:20px; text-align:center; color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+
+  <!-- Status bar -->
+  <div class="status-bar" id="statusBar">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-info">
+      <div class="status-label">สถานะล่าสุด</div>
+      <div class="status-value" id="statusValue">NORMAL</div>
+    </div>
+    <div class="status-time" id="statusTime">--:--</div>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">โทรหาผู้ดูแล</span>
+      <span class="badge badge-teal">One-Tap</span>
+    </div>
+
+    <div class="contacts" id="contactList"></div>
+
+    <!-- Divider -->
+    <div class="divider"><span>ฉุกเฉิน</span></div>
+
+    <!-- Emergency -->
+    <div class="emergency-section">
+      <button class="emergency-btn" onclick="triggerEmergency()">
+        <span class="emergency-icon">🚨</span>
+        <span class="emergency-text">
+          แจ้งเหตุฉุกเฉิน
+          <span class="emergency-sub">โทรหาทุกคนในรายการพร้อมกัน</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="footer-note">NiceCare v1 · 404TeamNotFound</div>
+  <div class="toast" id="toast"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle">เพิ่มผู้ติดต่อ</div>
+
+      <div class="field">
+        <label>ไอคอน</label>
+        <div class="emoji-picker" id="emojiPicker">
+          <div class="emoji-opt selected" data-emoji="👩">👩</div>
+          <div class="emoji-opt" data-emoji="👨">👨</div>
+          <div class="emoji-opt" data-emoji="👨‍⚕️">👨‍⚕️</div>
+          <div class="emoji-opt" data-emoji="👩‍⚕️">👩‍⚕️</div>
+          <div class="emoji-opt" data-emoji="👴">👴</div>
+          <div class="emoji-opt" data-emoji="👵">👵</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ชื่อ</label>
+        <input type="text" id="inputName" placeholder="เช่น คุณแม่สมจิตร" />
+      </div>
+
+      <div class="field">
+        <label>เบอร์โทร</label>
+        <input type="tel" id="inputPhone" placeholder="เช่น 081-234-5678" />
+      </div>
+
+      <div class="field">
+        <label>ประเภท</label>
+        <select id="inputRole">
+          <option value="ครอบครัว">ครอบครัว</option>
+          <option value="เจ้าหน้าที่ทางการแพทย์">เจ้าหน้าที่ทางการแพทย์</option>
+          <option value="เพื่อนบ้าน">เพื่อนบ้าน</option>
+          <option value="อื่น ๆ">อื่น ๆ</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn-save" onclick="saveContact()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────
+    let contacts = JSON.parse(localStorage.getItem('nicecare_contacts') || '[]');
+    let editingId = null;
+    let selectedEmoji = '👩';
+    let isFall = false;
+
+    if (contacts.length === 0) {
+      contacts = [
+        { id: 1, emoji: '👩', name: 'คุณแม่สมจิตร', phone: '081-234-5678', role: 'ครอบครัว' },
+        { id: 2, emoji: '👨‍⚕️', name: 'พยาบาลวิภา', phone: '02-345-6789', role: 'เจ้าหน้าที่ทางการแพทย์' }
+      ];
+      save();
+    }
+
+    function save() {
+      localStorage.setItem('nicecare_contacts', JSON.stringify(contacts));
+    }
+
+    // ── Render ─────────────────────────────────────────
+    function render() {
+      const list = document.getElementById('contactList');
+      list.innerHTML = '';
+
+      if (contacts.length === 0) {
+        list.innerHTML = '<div class="empty-state">ยังไม่มีผู้ติดต่อ<br>กดปุ่ม + เพื่อเพิ่มเลย</div>';
+      } else {
+        contacts.forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'contact-row';
+          row.innerHTML = `
+            <div class="avatar">${c.emoji}</div>
+            <div class="contact-info">
+              <div class="contact-name">${c.name}</div>
+              <div class="contact-role">${c.role} · ${c.phone}</div>
+            </div>
+            <div class="btn-group">
+              <button class="edit-btn" onclick="openEdit(${c.id})" title="แก้ไข">✏️</button>
+              <button class="delete-btn" onclick="deleteContact(${c.id})" title="ลบ">🗑</button>
+              <button class="call-btn call-btn-green" onclick="triggerCall('${c.name}','${c.phone}')" title="โทร">📞</button>
+            </div>
+          `;
+          list.appendChild(row);
+        });
+      }
+
+      // Add button
+      const addRow = document.createElement('button');
+      addRow.className = 'add-btn';
+      addRow.onclick = openAdd;
+      addRow.innerHTML = '<span style="font-size:18px">＋</span> เพิ่มผู้ติดต่อ';
+      list.appendChild(addRow);
+    }
+
+    // ── Modal ──────────────────────────────────────────
+    function openAdd() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'เพิ่มผู้ติดต่อ';
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputPhone').value = '';
+      document.getElementById('inputRole').value = 'ครอบครัว';
+      setEmoji('👩');
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function openEdit(id) {
+      const c = contacts.find(x => x.id === id);
+      if (!c) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'แก้ไขผู้ติดต่อ';
+      document.getElementById('inputName').value = c.name;
+      document.getElementById('inputPhone').value = c.phone;
+      document.getElementById('inputRole').value = c.role;
+      setEmoji(c.emoji);
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    function setEmoji(emoji) {
+      selectedEmoji = emoji;
+      document.querySelectorAll('.emoji-opt').forEach(el => {
+        el.classList.toggle('selected', el.dataset.emoji === emoji);
+      });
+    }
+
+    document.querySelectorAll('.emoji-opt').forEach(el => {
+      el.addEventListener('click', () => setEmoji(el.dataset.emoji));
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // ── CRUD ───────────────────────────────────────────
+    function saveContact() {
+      const name  = document.getElementById('inputName').value.trim();
+      const phone = document.getElementById('inputPhone').value.trim();
+      const role  = document.getElementById('inputRole').value;
+
+      if (!name || !phone) {
+        showToast('⚠️ กรุณากรอกชื่อและเบอร์โทร', false);
+        return;
+      }
+
+      if (editingId !== null) {
+        const idx = contacts.findIndex(x => x.id === editingId);
+        contacts[idx] = { id: editingId, emoji: selectedEmoji, name, phone, role };
+        showToast(`✅ อัปเดต ${name} แล้ว`, false);
+      } else {
+        const id = Date.now();
+        contacts.push({ id, emoji: selectedEmoji, name, phone, role });
+        showToast(`✅ เพิ่ม ${name} แล้ว`, false);
+      }
+
+      save();
+      render();
+      closeModal();
+    }
+
+    function deleteContact(id) {
+      const c = contacts.find(x => x.id === id);
+      if (!c) return;
+      if (!confirm(`ลบ "${c.name}" ออกจากรายการ?`)) return;
+      contacts = contacts.filter(x => x.id !== id);
+      save();
+      render();
+      showToast(`🗑 ลบ ${c.name} แล้ว`, false);
+    }
+
+    // ── Call ───────────────────────────────────────────
+    function triggerCall(name, phone) {
+      showToast(`📞 กำลังโทรหา ${name}…`, false);
+      setTimeout(() => { window.location.href = `tel:${phone.replace(/-/g,'')}` }, 300);
+    }
+
+    function triggerEmergency() {
+      if (contacts.length === 0) {
+        showToast('⚠️ ยังไม่มีผู้ติดต่อในรายการ', true);
+        return;
+      }
+      const names = contacts.map(c => c.name).join(', ');
+      showToast(`🚨 แจ้งเหตุฉุกเฉิน: ${names}`, true);
+      // โทรทีละคน (browser ให้โทรได้ครั้งละ 1 สาย)
+      if (contacts.length > 0) {
+        setTimeout(() => { window.location.href = `tel:${contacts[0].phone.replace(/-/g,'')}` }, 500);
+      }
+    }
+
+    // ── Toast ──────────────────────────────────────────
+    function showToast(msg, isEmergency) {
+      const toast = document.getElementById('toast');
+      toast.className = 'toast' + (isEmergency ? ' emergency' : '');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ── Clock ──────────────────────────────────────────
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('statusTime').textContent =
+        String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    }
+    updateTime();
+    setInterval(updateTime, 30000);
+
+    // ── Demo: click status bar to toggle fall state ────
+    document.getElementById('statusBar').addEventListener('click', () => {
+      isFall = !isFall;
+      document.getElementById('statusDot').classList.toggle('fall', isFall);
+      const val = document.getElementById('statusValue');
+      val.classList.toggle('fall', isFall);
+      val.textContent = isFall ? 'FALL DETECTED' : 'NORMAL';
+    });
+
+    // ── Init ───────────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
