@@ -77,3 +77,6 @@ Known Issues / LimitationsFirebase realtime update ยังมี delay บา�
 | สิ่งที่ใช้ workaround | Auto refresh และ localhost demo |
 | blocker สำคัญที่เจอ | Firebase delay และ AI detection ยังไม่เสถียรบางมุม |
 | วิธีแก้หรือแผนรับมือ | เตรียม video backup และ mock data |
+
+## Sprint 5 Goal
+Sprint 5 Goal ของทีมเราคือ ปรับ Core Flow ของระบบแจ้งเตือนฉุกเฉินให้ผู้ใช้สามารถ “เข้าใจสถานการณ์และตัดสินใจได้ทันที” โดยแก้ปัญหา UI อ่านยาก, ปุ่มไม่ชัด และขาด Action ต่อจาก feedback ใน Sprint 4
