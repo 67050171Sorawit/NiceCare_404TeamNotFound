@@ -1,24 +1,31 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// ---------------- WIFI ----------------
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
+// ================= WIFI =================
+const char* ssid = "A06Sorawit";
+const char* password = "m02062548";
 
-// ---------------- MQTT ----------------
+// ================= MQTT =================
 const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// ---------------- PIR SENSOR ----------------
-const int pirPin = 14;   // ขา OUT ของ PIR sensor
-int motionState = LOW;
+// ================= PIN =================
+const int pirPin = 14;
+const int ledPin = 26;
+const int buzzerPin = 25;
 
+// ================= STATE =================
+bool alertActive = false;
+int lastPirState = LOW;
+
+unsigned long ledOnTime = 0;
+const unsigned long ledDuration = 10000;
+
+// ================= WIFI =================
 void setup_wifi() {
-
-  delay(10);
 
   Serial.println();
   Serial.print("Connecting to WiFi: ");
@@ -31,12 +38,13 @@ void setup_wifi() {
     Serial.print(".");
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
+  Serial.println();
+  Serial.println("WiFi Connected");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 }
 
+// ================= MQTT RECONNECT =================
 void reconnectMQTT() {
 
   while (!client.connected()) {
@@ -48,7 +56,10 @@ void reconnectMQTT() {
 
     if (client.connect(clientId.c_str())) {
 
-      Serial.println("Connected");
+      Serial.println("MQTT Connected");
+
+      // 🔥 สำคัญ: subscribe topic
+      client.subscribe("nicecare/fall");
 
     } else {
 
@@ -61,19 +72,52 @@ void reconnectMQTT() {
   }
 }
 
+// ================= CALLBACK =================
+void callback(char* topic, byte* payload, unsigned int length) {
+
+  String msg = "";
+
+  for (int i = 0; i < length; i++) {
+    msg += (char)payload[i];
+  }
+
+  Serial.println("MQTT MSG: " + msg);
+
+  if (msg == "FALL") {
+
+    Serial.println("FALL DETECTED!");
+
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(buzzerPin, HIGH);
+    delay(2000);
+    digitalWrite(buzzerPin, LOW);
+    digitalWrite(ledPin, LOW);
+  }
+}
+
+// ================= SETUP =================
 void setup() {
 
   Serial.begin(115200);
 
   pinMode(pirPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+
+  digitalWrite(ledPin, LOW);
+  digitalWrite(buzzerPin, LOW);
 
   setup_wifi();
 
   client.setServer(mqtt_server, mqtt_port);
 
-  Serial.println("System Ready");
+  // 🔥 สำคัญมาก
+  client.setCallback(callback);
+
+  Serial.println("NiceCare System Ready");
 }
 
+// ================= LOOP =================
 void loop() {
 
   if (!client.connected()) {
@@ -82,33 +126,30 @@ void loop() {
 
   client.loop();
 
-  int sensorValue = digitalRead(pirPin);
+  int pirState = digitalRead(pirPin);
 
-  // ตรวจจับการเคลื่อนไหว
-  if (sensorValue == HIGH && motionState == LOW) {
+  if (pirState == HIGH && lastPirState == LOW && !alertActive) {
 
-    Serial.println("Motion Detected!");
+    Serial.println("ELDERLY GOT UP");
 
-    client.publish(
-      "nicecare/motion",
-      "MOTION DETECTED"
-    );
+    client.publish("nicecare/motion", "ELDERLY GOT UP");
 
-    motionState = HIGH;
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(buzzerPin, HIGH);
+    delay(100);
+    digitalWrite(buzzerPin, LOW);
+
+    ledOnTime = millis();
+    alertActive = true;
   }
 
-  // ไม่มีการเคลื่อนไหว
-  else if (sensorValue == LOW && motionState == HIGH) {
+  if (alertActive && millis() - ledOnTime >= ledDuration) {
 
-    Serial.println("No Motion");
-
-    client.publish(
-      "nicecare/motion",
-      "NO MOTION"
-    );
-
-    motionState = LOW;
+    digitalWrite(ledPin, LOW);
+    alertActive = false;
   }
 
-  delay(500);
+  lastPirState = pirState;
+
+  delay(100);
 }
