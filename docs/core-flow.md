@@ -41,3 +41,11 @@
 
 ระบบสามารถช่วยให้ผู้สูงอายุเคลื่อนไหวภายในบ้านได้อย่างปลอดภัยมากขึ้น  
 พร้อมเพิ่มความสะดวกสบายในการใช้ชีวิตประจำวันผ่านระบบอัตโนมัติ
+
+## สถานะ Core Flow
+| ส่วนของ Flow | สถานะ | Evidence |
+| --- | --- | --- |
+| Input | ทำงานได้  | https://drive.google.com/drive/folders/1cLpCQ9PU3f_upouqT-Q17N-U3uF_Ho2a?usp=drive_link |
+| Process | ทำงานได้  | https://drive.google.com/drive/folders/1cLpCQ9PU3f_upouqT-Q17N-U3uF_Ho2a?usp=drive_link |
+| Output | ทำงานได้  | https://nicecare-404teamnotfound.onrender.com/ |
+| Integration |  เชื่อมบางส่วน | https://nicecare-404teamnotfound.onrender.com/ |
