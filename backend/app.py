@@ -153,16 +153,16 @@ def register_user():
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
 
-    fall_status = "SAFE"
+    fall_status = "NORMAL"
     fall_time = "-"
 
-    # ===== Firebase SAFE LOAD =====
+    # ===== Firebase NORMAL LOAD =====
     try:
         ref = db.reference("/fall_status")
         data = ref.get()
 
         if data:
-            fall_status = data.get("status", "SAFE")
+            fall_status = data.get("status", "NORMAL")
             fall_time = data.get("time", "-")
 
     except Exception as e:
