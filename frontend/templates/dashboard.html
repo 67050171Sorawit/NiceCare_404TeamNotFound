@@ -1,102 +1,40 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
     <title>NiceCare Dashboard</title>
-
-```
-<meta http-equiv="refresh" content="2">
-<a href="/one-tap-call" style="display:block;margin-top:20px;color:#888;font-size:13px;text-align:center;">
-  ⚙️ จัดการผู้ติดต่อฉุกเฉิน
-</a>
-
-
-<style>
-    body {
-        font-family: Arial;
-        text-align: center;
-        margin-top: 50px;
-    }
-
-    .normal {
-        color: green;
-    }
-
-    .fall {
-        color: red;
-    }
-
-    .card {
-        width: 350px;
-        margin: auto;
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        margin-top: 20px;
-    }
-
-    .call-btn {
-        display: block;
-        margin: 10px;
-        padding: 12px;
-        background: red;
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
-    }
-
-    .call-btn:hover {
-        background: darkred;
-    }
-</style>
-```
-
+    <meta http-equiv="refresh" content="2">
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; }
+        .normal { color: green; }
+        .fall { color: red; }
+        .card { width: 350px; margin: auto; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-top: 20px; }
+        .call-btn { display: block; margin: 10px; padding: 12px; background: red; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .call-btn:hover { background: darkred; }
+    </style>
 </head>
-
 <body>
+    <h1>NiceCare Dashboard</h1>
 
-```
-<h1>NiceCare Dashboard</h1>
+    {% if fall_status == "FALL DETECTED" %}
+        <h2 class="fall">🚨 {{ fall_status }}</h2>
+    {% else %}
+        <h2 class="normal">✅ {{ fall_status }}</h2>
+    {% endif %}
 
-{% if status == "FALL DETECTED" %}
-    <h2 class="fall">🚨 {{ status }}</h2>
-{% else %}
-    <h2 class="normal">✅ {{ status }}</h2>
-{% endif %}
+    <h3>Last Update: {{ fall_time }}</h3>
 
-<h3>Last Update: {{ time }}</h3>
+    {% if fall_status == "FALL DETECTED" %}
+    <div class="card">
+        <h2>Emergency Contacts</h2>
+        <a class="call-btn" href="tel:0812345678">📞 ลูกชาย</a>
+        <a class="call-btn" href="tel:0898765432">📞 ลูกสาว</a>
+        <a class="call-btn" href="tel:0851112222">📞 ผู้ดูแล</a>
+        <a class="call-btn" href="tel:1669">🚑 แทร 1669</a>
+    </div>
+    {% endif %}
 
-{% if status == "FALL DETECTED" %}
-<div class="card">
-
-    <h2>Emergency Contacts</h2>
-
-    <a class="call-btn"
-       href="tel:0812345678">
-       📞 ลูกชาย
+    <a href="/one-tap-call" style="display:block;margin-top:20px;color:#888;font-size:13px;">
+        ⚙️ จัดการผู้ติดต่อฉุกเฉิน
     </a>
-
-    <a class="call-btn"
-       href="tel:0898765432">
-       📞 ลูกสาว
-    </a>
-
-    <a class="call-btn"
-       href="tel:0851112222">
-       📞 ผู้ดูแล
-    </a>
-
-    <a class="call-btn"
-       href="tel:1669">
-       🚑 โทร 1669
-    </a>
-
-</div>
-{% endif %}
-```
-
 </body>
-
 </html>
