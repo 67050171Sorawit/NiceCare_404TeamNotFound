@@ -44,14 +44,13 @@ pose = mp_pose.Pose(
 
 
 # =========================
-# FALL VARIABLES
+# VARIABLES
 # =========================
 previous_diff_y = 1.0
 last_status = "NORMAL"
 
-last_fall_time = 0
-fall_detected_until = 0
-
+last_firebase_update = 0
+FIREBASE_COOLDOWN = 2  # seconds
 
 print("AI STARTED")
 
@@ -61,42 +60,38 @@ print("AI STARTED")
 # =========================
 while True:
 
+    frame = None
+
+    # =========================
+    # GET IMAGE (SAFE VERSION)
+    # =========================
     try:
+        response = requests.get(ESP32_URL, timeout=2)
 
-        response = requests.get(
-            ESP32_URL,
-            timeout=1
-        )
-
-        img = np.frombuffer(
-            response.content,
-            np.uint8
-        )
-
-        frame = cv2.imdecode(
-            img,
-            cv2.IMREAD_COLOR
-        )
-
-        if frame is None:
+        if response.status_code != 200:
+            print("ESP32 BAD RESPONSE")
+            time.sleep(1)
             continue
 
-    except:
+        img = np.frombuffer(response.content, np.uint8)
+        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
-        print("ESP32 LOST")
+        if frame is None:
+            print("FRAME NULL")
+            time.sleep(1)
+            continue
 
+    except Exception as e:
+        print("ESP32 LOST:", e)
+        time.sleep(2)
         continue
 
 
-    frame = cv2.resize(
-        frame,
-        (960, 540)
-    )
-
-    rgb = cv2.cvtColor(
-        frame,
-        cv2.COLOR_BGR2RGB
-    )
+    # =========================
+    # PROCESS FRAME
+    # =========================
+    frame = cv2.resize(frame, (960, 540))
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     results = pose.process(rgb)
 
@@ -112,94 +107,63 @@ while True:
         )
 
         shoulder = results.pose_landmarks.landmark[11]
-
         hip = results.pose_landmarks.landmark[23]
 
-        diff_y = abs(
-            shoulder.y - hip.y
-        )
+        diff_y = abs(shoulder.y - hip.y)
 
-        movement_speed = abs(
-            previous_diff_y - diff_y
-        )
+        movement_speed = abs(previous_diff_y - diff_y)
 
-        current = time.time()
-
-
+        # =========================
+        # FALL DETECTION LOGIC
+        # =========================
         if diff_y < 0.10 and movement_speed > 0.05:
-
-            if current - last_fall_time > 5:
-
-                fall_detected_until = current + 5
-
-                last_fall_time = current
-
-
-        if current < fall_detected_until:
-
             fall_status = "FALL DETECTED"
 
         previous_diff_y = diff_y
 
 
-    if fall_status != last_status:
+    # =========================
+    # FIREBASE (ANTI-SPAM)
+    # =========================
+    current_time = time.time()
 
-        ref = db.reference(
-            "/fall_status"
-        )
+    if fall_status != last_status and (current_time - last_firebase_update > FIREBASE_COOLDOWN):
 
-        ref.set({
+        try:
+            ref = db.reference("/fall_status")
 
-            "status":
-            fall_status,
+            ref.set({
+                "status": fall_status,
+                "time": datetime.now().strftime("%H:%M:%S")
+            })
 
-            "time":
-            datetime.now().strftime(
-                "%H:%M:%S"
-            )
+            print("SEND →", fall_status)
 
-        })
+            last_status = fall_status
+            last_firebase_update = current_time
 
-        print(
-            "SEND →",
-            fall_status
-        )
-
-        last_status = fall_status
+        except Exception as e:
+            print("FIREBASE ERROR:", e)
 
 
-    color = (
-        (0,255,0)
-        if fall_status=="NORMAL"
-        else
-        (0,0,255)
-    )
+    # =========================
+    # UI
+    # =========================
+    color = (0,255,0) if fall_status == "NORMAL" else (0,0,255)
 
     cv2.putText(
-
         frame,
-
         fall_status,
-
-        (20,50),
-
+        (20, 50),
         cv2.FONT_HERSHEY_SIMPLEX,
-
         1,
-
         color,
-
         3
     )
 
+    cv2.imshow("NiceCare AI", frame)
 
-    cv2.imshow(
-        "NiceCare AI",
-        frame
-    )
-
-
-    if cv2.waitKey(1)==27:
+    if cv2.waitKey(1) == 27:
         break
 
 
