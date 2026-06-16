@@ -52,7 +52,7 @@ create_db()
 # =========================
 # FIREBASE
 # =========================
-cred = credentials.Certificate("firebase_key.json")
+cred = credentials.Certificate("/etc/secrets/firebase_key.json")
 
 if not firebase_admin._apps:
     firebase_admin.initialize_app(
