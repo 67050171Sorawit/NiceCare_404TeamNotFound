@@ -3,7 +3,7 @@ import numpy as np
 import requests
 import mediapipe as mp
 
-url = "http://10.194.23.33/capture"  # เปลี่ยน IP
+url = "http://10.232.97.34/capture"  # เปลี่ยน IP
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()

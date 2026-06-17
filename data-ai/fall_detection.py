@@ -13,7 +13,7 @@ from firebase_admin import db
 # =========================
 # ESP32 CAMERA
 # =========================
-ESP32_URL = "http://10.194.23.33/capture"
+ESP32_URL = "http://10.232.97.34/capture"
 
 
 # =========================

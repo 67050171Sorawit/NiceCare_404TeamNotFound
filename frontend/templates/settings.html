@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NiceCare — Settings</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4f9; min-height: 100vh; }
+
+        .nc-nav {
+            background: #1a56a0; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 56px; position: sticky; top: 0; z-index: 100;
+        }
+        .nc-logo { color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .nc-logo img { height: 42px; width: auto; }
+        .nc-nav-links { display: flex; gap: 4px; }
+        .nc-nav-link { color: rgba(255,255,255,0.75); font-size: 13px; padding: 6px 12px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .nc-nav-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .nc-nav-link.active { background: rgba(255,255,255,0.2); color: #fff; }
+
+        .nc-body { padding: 24px; max-width: 680px; margin: 0 auto; }
+        .nc-page-title { font-size: 20px; font-weight: bold; color: #1a3a5c; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+        .nc-card { background: #fff; border: 0.5px solid #d0dbe8; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .nc-card-title { font-size: 14px; font-weight: bold; color: #1a3a5c; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+        /* CONTACT ROW */
+        .nc-contact-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 0.5px solid #e8eef4;
+        }
+        .nc-contact-row:last-child { border-bottom: none; }
+        .nc-contact-info { flex: 1; }
+        .nc-contact-name { font-size: 14px; color: #1a3a5c; font-weight: bold; }
+        .nc-contact-phone { font-size: 13px; color: #5a6a7e; }
+
+        .nc-btn { border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .nc-btn-edit { background: #dbeafe; color: #1e40af; }
+        .nc-btn-edit:hover { background: #bfdbfe; }
+        .nc-btn-del { background: #fee2e2; color: #991b1b; }
+        .nc-btn-del:hover { background: #fecaca; }
+        .nc-btn-save { background: #1a56a0; color: #fff; padding: 8px 18px; font-size: 13px; }
+        .nc-btn-save:hover { background: #154080; }
+        .nc-btn-cancel { background: #f1f5f9; color: #5a6a7e; padding: 8px 14px; font-size: 13px; }
+
+        /* INLINE EDIT FORM */
+        .nc-edit-form { display: none; background: #f8fafc; border: 0.5px solid #d0dbe8; border-radius: 8px; padding: 12px; margin-top: 8px; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .nc-edit-form.open { display: flex; }
+        .nc-edit-form input { border: 0.5px solid #d0dbe8; border-radius: 6px; padding: 7px 10px; font-size: 13px; flex: 1; min-width: 120px; }
+        .nc-edit-form input:focus { outline: none; border-color: #1a56a0; }
+
+        /* ADD FORM */
+        .nc-add-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+        .nc-add-form input { border: 0.5px solid #d0dbe8; border-radius: 6px; padding: 8px 12px; font-size: 13px; flex: 1; min-width: 120px; }
+        .nc-add-form input:focus { outline: none; border-color: #1a56a0; }
+
+        .nc-back { display: inline-flex; align-items: center; gap: 6px; color: #5a6a7e; font-size: 13px; text-decoration: none; margin-bottom: 16px; }
+        .nc-back:hover { color: #1a56a0; }
+
+        .nc-footer { font-size: 11px; color: #8a9ab0; text-align: center; padding: 12px 0 24px; }
+    </style>
+</head>
+<body>
+
+<nav class="nc-nav">
+    <a class="nc-logo" href="/dashboard">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="NiceCare">
+    </a>
+    <div class="nc-nav-links">
+        <a class="nc-nav-link" href="/dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+        <a class="nc-nav-link active" href="/settings"><i class="ti ti-settings"></i> Settings</a>
+        <a class="nc-nav-link" href="/logout"><i class="ti ti-logout"></i> Logout</a>
+    </div>
+</nav>
+
+<div class="nc-body">
+
+    <a class="nc-back" href="/dashboard"><i class="ti ti-arrow-left"></i> กลับ Dashboard</a>
+
+    <div class="nc-page-title">
+        <i class="ti ti-phone-call"></i> จัดการผู้ติดต่อฉุกเฉิน
+    </div>
+
+    <!-- รายชื่อที่มีอยู่ -->
+    <div class="nc-card">
+        <div class="nc-card-title"><i class="ti ti-users"></i> รายชื่อปัจจุบัน</div>
+
+        {% for c in contacts %}
+        <div class="nc-contact-row" id="row-{{ c.id }}">
+            <i class="ti ti-user" style="color:#1a56a0; font-size:18px;"></i>
+            <div class="nc-contact-info">
+                <div class="nc-contact-name">{{ c.name }}</div>
+                <div class="nc-contact-phone"><i class="ti ti-phone" style="font-size:12px;"></i> {{ c.phone }}</div>
+            </div>
+            <button class="nc-btn nc-btn-edit" onclick="toggleEdit({{ c.id }})">
+                <i class="ti ti-edit"></i> แก้ไข
+            </button>
+            <form method="POST" action="/contacts/delete/{{ c.id }}" style="display:inline;"
+                  onsubmit="return confirm('ลบ {{ c.name }} ออกจากรายชื่อ?')">
+                <button class="nc-btn nc-btn-del" type="submit">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Inline edit form -->
+        <div class="nc-edit-form" id="edit-{{ c.id }}">
+            <form method="POST" action="/contacts/edit/{{ c.id }}" style="display:flex; gap:8px; flex-wrap:wrap; width:100%; align-items:center;">
+                <input type="text"  name="name"  value="{{ c.name }}"  placeholder="ชื่อ" required>
+                <input type="tel"   name="phone" value="{{ c.phone }}" placeholder="เบอร์โทร" required>
+                <button type="submit" class="nc-btn nc-btn-save"><i class="ti ti-check"></i> บันทึก</button>
+                <button type="button" class="nc-btn nc-btn-cancel" onclick="toggleEdit({{ c.id }})">ยกเลิก</button>
+            </form>
+        </div>
+        {% endfor %}
+
+        {% if not contacts %}
+        <p style="color:#8a9ab0; font-size:13px; text-align:center; padding:16px;">ยังไม่มีผู้ติดต่อ</p>
+        {% endif %}
+    </div>
+
+    <!-- เพิ่มผู้ติดต่อใหม่ -->
+    <div class="nc-card">
+        <div class="nc-card-title"><i class="ti ti-plus"></i> เพิ่มผู้ติดต่อใหม่</div>
+        <form method="POST" action="/contacts/add">
+            <div class="nc-add-form">
+                <input type="text" name="name"  placeholder="ชื่อ เช่น ลูกชาย" required>
+                <input type="tel"  name="phone" placeholder="เบอร์โทร เช่น 0812345678" required>
+                <button type="submit" class="nc-btn nc-btn-save">
+                    <i class="ti ti-plus"></i> เพิ่ม
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <p class="nc-footer">NiceCare — Elderly Monitoring System &nbsp;·&nbsp; 404 Team Not Found</p>
+</div>
+
+<script>
+    function toggleEdit(id) {
+        const form = document.getElementById('edit-' + id);
+        form.classList.toggle('open');
+    }
+</script>
+
+</body>
+</html>

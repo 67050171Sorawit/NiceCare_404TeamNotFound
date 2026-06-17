@@ -1,9 +1,7 @@
-from flask import Flask, render_template, request, redirect, Response
+from flask import Flask, render_template, request, redirect, Response, jsonify
 import sqlite3
 import os
-import cv2
 import requests
-import numpy as np
 import time
 
 import firebase_admin
@@ -23,7 +21,7 @@ app = Flask(
 # =========================
 # ESP32 CAMERA
 # =========================
-ESP32_URL = "http://10.194.23.33/capture"
+ESP32_URL = "http://10.232.97.34/capture"
 
 
 # =========================
@@ -42,6 +40,24 @@ def create_db():
     )
     """)
 
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS contacts(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL
+    )
+    """)
+
+    # ใส่ข้อมูลตัวอย่างถ้ายังไม่มี
+    c.execute("SELECT COUNT(*) FROM contacts")
+    if c.fetchone()[0] == 0:
+        c.executemany("INSERT INTO contacts(name, phone) VALUES(?,?)", [
+            ("ลูกชาย",  "0812345678"),
+            ("ลูกสาว",  "0898765432"),
+            ("ผู้ดูแล", "0851112222"),
+            ("แทร 1669", "1669"),
+        ])
+
     conn.commit()
     conn.close()
 
@@ -52,7 +68,7 @@ create_db()
 # =========================
 # FIREBASE
 # =========================
-cred = credentials.Certificate("/etc/secrets/firebase_key.json")
+cred = credentials.Certificate("firebase_key.json")
 
 if not firebase_admin._apps:
     firebase_admin.initialize_app(
@@ -64,27 +80,34 @@ if not firebase_admin._apps:
 
 
 # =========================
+# HELPERS
+# =========================
+def get_contacts():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("SELECT id, name, phone FROM contacts ORDER BY id")
+    rows = [{"id": r[0], "name": r[1], "phone": r[2]} for r in c.fetchall()]
+    conn.close()
+    return rows
+
+
+# =========================
 # CAMERA STREAM
 # =========================
 def generate_frames():
     while True:
         try:
             response = requests.get(ESP32_URL, timeout=0.5)
-
             if response.status_code != 200:
                 continue
-
             frame = response.content
-
             yield (
                 b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n'
                 + frame +
                 b'\r\n'
             )
-
             time.sleep(0.5)
-
         except Exception as e:
             print("STREAM ERROR:", e)
             continue
@@ -92,8 +115,6 @@ def generate_frames():
 
 @app.route("/video")
 def video():
-    print("VIDEO ROUTE OPENED")
-
     return Response(
         generate_frames(),
         mimetype="multipart/x-mixed-replace; boundary=frame"
@@ -129,42 +150,50 @@ def register():
 # =========================
 @app.route("/register_user", methods=["POST"])
 def register_user():
-
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username   = request.form.get("username")
+    password   = request.form.get("password")
     camera_url = request.form.get("camera_url")
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-
-    c.execute("""
-        INSERT INTO users VALUES(NULL,?,?,?)
-    """, (username, password, camera_url))
-
+    c.execute("INSERT INTO users VALUES(NULL,?,?,?)", (username, password, camera_url))
     conn.commit()
     conn.close()
-
     return redirect("/login")
 
 
 # =========================
-# DASHBOARD (FIXED)
+# API: FALL STATUS
+# =========================
+@app.route("/api/fall-status")
+def fall_status_api():
+    try:
+        ref  = db.reference("/fall_status")
+        data = ref.get()
+        if data:
+            return jsonify({
+                "status": data.get("status", "NORMAL"),
+                "time":   data.get("time",   "-")
+            })
+    except Exception as e:
+        print("Firebase error:", e)
+    return jsonify({"status": "NORMAL", "time": "-"})
+
+
+# =========================
+# DASHBOARD
 # =========================
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-
     fall_status = "NORMAL"
-    fall_time = "-"
+    fall_time   = "-"
 
-    # ===== Firebase NORMAL LOAD =====
     try:
-        ref = db.reference("/fall_status")
+        ref  = db.reference("/fall_status")
         data = ref.get()
-
         if data:
             fall_status = data.get("status", "NORMAL")
-            fall_time = data.get("time", "-")
-
+            fall_time   = data.get("time",   "-")
     except Exception as e:
         print("Firebase error:", e)
 
@@ -177,25 +206,19 @@ def dashboard():
     username = "Guest"
 
     if request.method == "POST":
-
         username = request.form.get("username")
         password = request.form.get("password")
 
         conn = sqlite3.connect("users.db")
-        c = conn.cursor()
-
-        c.execute("""
-            SELECT *
-            FROM users
-            WHERE username=?
-            AND password=?
-        """, (username, password))
-
+        c    = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         user = c.fetchone()
         conn.close()
 
         if not user:
             return "<h1>Login Failed</h1>"
+
+    contacts = get_contacts()
 
     return render_template(
         "index.html",
@@ -203,8 +226,54 @@ def dashboard():
         camera_status="ONLINE",
         fall_status=fall_status,
         fall_time=fall_time,
-        alerts=alerts
+        alerts=alerts,
+        contacts=contacts
     )
+
+
+# =========================
+# SETTINGS — จัดการผู้ติดต่อ
+# =========================
+@app.route("/settings")
+def settings():
+    contacts = get_contacts()
+    return render_template("settings.html", contacts=contacts)
+
+
+@app.route("/contacts/add", methods=["POST"])
+def contact_add():
+    name  = request.form.get("name",  "").strip()
+    phone = request.form.get("phone", "").strip()
+    if name and phone:
+        conn = sqlite3.connect("users.db")
+        c    = conn.cursor()
+        c.execute("INSERT INTO contacts(name, phone) VALUES(?,?)", (name, phone))
+        conn.commit()
+        conn.close()
+    return redirect("/settings")
+
+
+@app.route("/contacts/edit/<int:cid>", methods=["POST"])
+def contact_edit(cid):
+    name  = request.form.get("name",  "").strip()
+    phone = request.form.get("phone", "").strip()
+    if name and phone:
+        conn = sqlite3.connect("users.db")
+        c    = conn.cursor()
+        c.execute("UPDATE contacts SET name=?, phone=? WHERE id=?", (name, phone, cid))
+        conn.commit()
+        conn.close()
+    return redirect("/settings")
+
+
+@app.route("/contacts/delete/<int:cid>", methods=["POST"])
+def contact_delete(cid):
+    conn = sqlite3.connect("users.db")
+    c    = conn.cursor()
+    c.execute("DELETE FROM contacts WHERE id=?", (cid,))
+    conn.commit()
+    conn.close()
+    return redirect("/settings")
 
 
 # =========================
@@ -216,23 +285,16 @@ def logout():
 
 
 # =========================
-# CALL PAGE
+# CALL PAGE (legacy)
 # =========================
 @app.route("/one-tap-call")
 def one_tap_call():
-    return app.send_static_file("one-tap-call.html")
+    return redirect("/settings")
 
 
 # =========================
 # RUN
 # =========================
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 5000))
-
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=True,
-        threaded=True
-    )
+    app.run(host="0.0.0.0", port=port, debug=True, threaded=True)

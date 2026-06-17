@@ -1,386 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="th">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
     <title>NiceCare Dashboard</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4f9; min-height: 100vh; }
 
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
+        .nc-nav {
+            background: #1a56a0;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
+        .nc-logo { color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .nc-nav-links { display: flex; gap: 4px; }
+        .nc-nav-link { color: rgba(255,255,255,0.75); font-size: 13px; padding: 6px 12px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .nc-nav-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .nc-nav-link.active { background: rgba(255,255,255,0.2); color: #fff; }
 
-        body{
-            font-family:'Poppins', sans-serif;
-            background:#eef2f7;
-            color:#2c3e50;
-        }
+        .nc-body { padding: 24px; max-width: 960px; margin: 0 auto; }
 
-        .sidebar{
-            position:fixed;
-            left:0;
-            top:0;
-            width:240px;
-            height:100vh;
-            background:#1f2937;
-            padding:30px 20px;
-        }
+        .nc-greeting { font-size: 13px; color: #5a6a7e; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
 
-        .logo-section{
-            text-align:center;
-            margin-bottom:40px;
-        }
+        .nc-pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-        .logo-section img{
-            width:90px;
-            margin-bottom:15px;
-        }
+        .nc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .nc-metric { background: #fff; border: 0.5px solid #d0dbe8; border-radius: 12px; padding: 16px; }
+        .nc-metric-label { font-size: 12px; color: #5a6a7e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .nc-metric-value { font-size: 16px; font-weight: bold; color: #1a56a0; }
+        .nc-metric-value.normal { color: #1a7a4a; }
+        .nc-metric-value.danger { color: #b91c1c; }
 
-        .logo{
-            color:white;
-            font-size:28px;
-            font-weight:700;
-        }
+        .nc-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: bold; margin-top: 6px; }
+        .nc-badge.green { background: #dcfce7; color: #166534; }
+        .nc-badge.red { background: #fee2e2; color: #991b1b; }
+        .nc-badge.blue { background: #dbeafe; color: #1e40af; }
 
-        .menu a{
-            display:block;
-            color:#d1d5db;
-            text-decoration:none;
-            padding:15px;
-            border-radius:12px;
-            margin-bottom:10px;
-            transition:0.3s;
-        }
+        .nc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 600px) { .nc-row { grid-template-columns: 1fr; } }
 
-        .menu a:hover{
-            background:#374151;
-            color:white;
-        }
+        .nc-card { background: #fff; border: 0.5px solid #d0dbe8; border-radius: 12px; padding: 16px; }
+        .nc-card-title { font-size: 13px; font-weight: bold; color: #1a3a5c; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-        .main{
-            margin-left:240px;
-            padding:30px;
-        }
+        .nc-cam { background: #0f172a; border-radius: 8px; overflow: hidden; width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; }
+        .nc-cam img { width: 100%; height: 100%; object-fit: cover; }
+        .nc-cam-offline { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .nc-cam-offline i { font-size: 32px; color: rgba(255,255,255,0.2); }
+        .nc-cam-offline span { color: rgba(255,255,255,0.4); font-size: 12px; }
 
-        .topbar{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:30px;
-        }
+        .nc-live { display: inline-flex; align-items: center; gap: 5px; background: #ef4444; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 99px; margin-left: auto; }
+        .nc-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1s infinite; }
 
-        .topbar h1{
-            font-size:32px;
-            font-weight:700;
-        }
+        .nc-alert-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #e8eef4; font-size: 13px; color: #3a4a5c; }
+        .nc-alert-item:last-child { border-bottom: none; }
+        .nc-alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .nc-alert-dot.ok { background: #22c55e; }
+        .nc-alert-dot.fall { background: #ef4444; }
+        .nc-alert-time { color: #8a9ab0; font-size: 12px; margin-left: auto; }
 
-        .user-box{
-            background:white;
-            padding:12px 20px;
-            border-radius:15px;
-            box-shadow:0 4px 15px rgba(0,0,0,0.08);
-        }
+        .nc-sos { background: #b91c1c; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; text-decoration: none; }
+        .nc-sos:hover { background: #991b1b; }
 
-        .cards{
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
-            gap:20px;
-            margin-bottom:30px;
-        }
+        .nc-contact { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #e8eef4; font-size: 13px; color: #3a4a5c; }
+        .nc-contact:last-of-type { border-bottom: none; }
+        .nc-contact-name { display: flex; align-items: center; gap: 8px; }
+        .nc-call-btn { background: #1a56a0; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; text-decoration: none; }
+        .nc-call-btn:hover { background: #154080; }
+        .nc-call-btn.red { background: #b91c1c; }
+        .nc-call-btn.red:hover { background: #991b1b; }
 
-        .card{
-            background:white;
-            padding:25px;
-            border-radius:20px;
-            box-shadow:0 6px 20px rgba(0,0,0,0.08);
-        }
+        .nc-fall-banner { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; color: #991b1b; font-weight: bold; font-size: 15px; }
+        .nc-fall-banner i { font-size: 24px; }
 
-        .card h2{
-            font-size:18px;
-            color:#6b7280;
-            margin-bottom:15px;
-        }
-
-        .status{
-            font-size:32px;
-            font-weight:700;
-        }
-
-        .online{
-            color:#10b981;
-        }
-
-        .normal{
-            color:#3b82f6;
-        }
-
-        .fall{
-            color:#ef4444;
-        }
-
-        .time-box{
-            margin-top:10px;
-            color:#6b7280;
-            font-size:14px;
-        }
-
-        .sos-section{
-            margin-bottom:30px;
-            text-align:center;
-        }
-
-        .sos-btn{
-            background:red;
-            color:white;
-            border:none;
-            padding:18px 45px;
-            border-radius:18px;
-            font-size:24px;
-            font-weight:bold;
-            cursor:pointer;
-            box-shadow:0 8px 25px rgba(255,0,0,0.3);
-            transition:0.3s;
-        }
-
-        .camera-section{
-            background:white;
-            border-radius:25px;
-            padding:20px;
-            box-shadow:0 6px 20px rgba(0,0,0,0.08);
-            margin-bottom:30px;
-        }
-
-        .camera-header{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:20px;
-        }
-
-        .live-dot{
-            width:12px;
-            height:12px;
-            background:red;
-            border-radius:50%;
-            display:inline-block;
-            margin-right:8px;
-            animation:blink 1s infinite;
-        }
-
-        @keyframes blink{
-            0%{opacity:1;}
-            50%{opacity:0.3;}
-            100%{opacity:1;}
-        }
-
-        .camera-box{
-            width:100%;
-            height:550px;
-            border-radius:20px;
-            overflow:hidden;
-            background:black;
-        }
-
-        .camera-box img{
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-        }
-
-        .alerts{
-            background:white;
-            border-radius:25px;
-            padding:25px;
-            box-shadow:0 6px 20px rgba(0,0,0,0.08);
-        }
-
-        .alerts h2{
-            margin-bottom:20px;
-        }
-
-        .alert-item{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:15px;
-            background:#f9fafb;
-            border-radius:12px;
-            margin-bottom:12px;
-        }
-
-        .alert-status{
-            color:#ef4444;
-            font-weight:600;
-        }
-
-        @media(max-width:900px){
-
-            .sidebar{
-                width:100%;
-                height:auto;
-                position:relative;
-            }
-
-            .main{
-                margin-left:0;
-            }
-
-            .camera-box{
-                height:300px;
-            }
-        }
-
+        .nc-footer { font-size: 11px; color: #8a9ab0; text-align: center; padding: 12px 0 24px; }
+        #nc-conn-status { font-size: 11px; color: #8a9ab0; margin-left: 8px; }
     </style>
-
 </head>
-
 <body>
 
-    <div class="sidebar">
+<nav class="nc-nav">
+    <a class="nc-logo" href="#">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="NiceCare" style="height:42px; width:auto;">
+    </a>
+    <div class="nc-nav-links">
+        <a class="nc-nav-link active" href="/dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+        <a class="nc-nav-link" href="#"><i class="ti ti-camera"></i> Camera</a>
+        <a class="nc-nav-link" href="#"><i class="ti ti-bell"></i> Alerts</a>
+        <a class="nc-nav-link" href="/logout"><i class="ti ti-logout"></i> Logout</a>
+    </div>
+</nav>
 
-        <div class="logo-section">
+<div class="nc-body">
 
-            <img src="{{ url_for('static', filename='logo.png') }}">
+    <p class="nc-greeting">
+        <span class="nc-pulse"></span>
+        ยินดีต้อนรับ, <strong>{{ username }}</strong>
+        <span id="nc-conn-status">กำลังเชื่อมต่อ...</span>
+    </p>
 
-            <div class="logo">
-                NiceCare
-            </div>
-
-        </div>
-
-        <div class="menu">
-
-            <a href="#">🏠 Dashboard</a>
-            <a href="#">📷 Camera</a>
-            <a href="#">🔔 Notifications</a>
-            <a href="/logout">🚪 Logout</a>
-
-        </div>
-
+    <div class="nc-fall-banner" id="nc-fall-banner" style="display:{% if fall_status == 'FALL DETECTED' %}flex{% else %}none{% endif %};">
+        <i class="ti ti-alert-triangle"></i>
+        ตรวจพบการล้ม! กรุณาตรวจสอบทันที
     </div>
 
-    <div class="main">
+    <div class="nc-grid">
+        <div class="nc-metric">
+            <div class="nc-metric-label"><i class="ti ti-camera"></i> Camera Status</div>
+            <div class="nc-metric-value">{{ camera_status }}</div>
+            <span class="nc-badge blue"><i class="ti ti-circle-check"></i> เชื่อมต่อแล้ว</span>
+        </div>
+        <div class="nc-metric">
+            <div class="nc-metric-label"><i class="ti ti-activity"></i> Fall Detection</div>
+            <div class="nc-metric-value {% if fall_status == 'FALL DETECTED' %}danger{% else %}normal{% endif %}" id="nc-fall-value">{{ fall_status }}</div>
+            <span class="nc-badge {% if fall_status == 'FALL DETECTED' %}red{% else %}green{% endif %}" id="nc-fall-badge">
+                {% if fall_status == 'FALL DETECTED' %}
+                    <i class="ti ti-alert-circle"></i> ตรวจพบการล้ม
+                {% else %}
+                    <i class="ti ti-circle-check"></i> ปกติ
+                {% endif %}
+            </span>
+        </div>
+        <div class="nc-metric">
+            <div class="nc-metric-label"><i class="ti ti-clock"></i> อัปเดตล่าสุด</div>
+            <div class="nc-metric-value" style="color:#3a4a5c; font-size:14px;" id="nc-fall-time">{{ fall_time }}</div>
+            <span class="nc-badge blue">Realtime</span>
+        </div>
+    </div>
 
-        <div class="topbar">
-
-            <h1>
-                Elderly Monitoring System
-            </h1>
-
-            <div class="user-box">
-                Welcome, {{ username }}
+    <div class="nc-row">
+        <div class="nc-card">
+            <div class="nc-card-title">
+                <i class="ti ti-video"></i> Live Camera
+                <span class="nc-live"><span class="nc-live-dot"></span>LIVE</span>
             </div>
-
+            <div class="nc-cam">
+                <img src="/video" alt="ESP32 Camera"
+                    onerror="this.style.display='none'; document.getElementById('cam-offline').style.display='flex';">
+                <div id="cam-offline" class="nc-cam-offline" style="display:none;">
+                    <i class="ti ti-camera-off"></i>
+                    <span>กล้องออฟไลน์</span>
+                </div>
+            </div>
         </div>
 
-        <div class="cards">
-
-            <div class="card">
-
-                <h2>Camera Status</h2>
-
-                <div class="status online">
-                    {{ camera_status }}
-                </div>
-
-            </div>
-
-            <div class="card">
-
-                <h2>Fall Detection</h2>
-
-                <div class="status 
-                    {% if fall_status == 'FALL DETECTED' %}
-                        fall
-                    {% else %}
-                        normal
-                    {% endif %}
-                ">
-
-                    {{ fall_status }}
-
-                </div>
-
-                <div class="time-box">
-                    Last Update: {{ fall_time }}
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="sos-section">
-
-            <button class="sos-btn">
-                🚨 EMERGENCY SOS
-            </button>
-
-        </div>
-
-        <div class="camera-section">
-
-            <div class="camera-header">
-
-                <h2>Live Camera</h2>
-
-                <div>
-                    <span class="live-dot"></span>
-                    LIVE
-                </div>
-
-            </div>
-
-           <div class="camera-box">
-
-              <img
-               
-                 src="/video"
-                 style="
-                 width:100%;
-                 height:100%;
-                 object-fit:cover;
-                "
-                 alt="ESP32 Camera">
-
-             </div>
-        </div>
-
-        <div class="alerts">
-
-            <h2>Alert History</h2>
-
+        <div class="nc-card">
+            <div class="nc-card-title"><i class="ti ti-history"></i> Alert History</div>
             {% for alert in alerts %}
-
-            <div class="alert-item">
-
-                <div>
-                    {{ alert }}
-                </div>
-
-                <div class="alert-status">
-                    Monitoring
-                </div>
-
+            <div class="nc-alert-item">
+                <div class="nc-alert-dot {% if 'Fall' in alert %}fall{% else %}ok{% endif %}"></div>
+                {% if 'Fall' in alert %}
+                    <strong style="color:#b91c1c;">Fall Detected</strong>
+                {% else %}
+                    Normal monitoring
+                {% endif %}
+                <span class="nc-alert-time">{{ alert.split(' - ')[0] }}</span>
             </div>
-
             {% endfor %}
-
+            <a class="nc-sos" href="tel:1669">
+                <i class="ti ti-urgent"></i> EMERGENCY SOS
+            </a>
         </div>
-
     </div>
+
+    <div class="nc-card" style="margin-bottom:16px;">
+        <div class="nc-card-title">
+            <i class="ti ti-phone-call"></i> ผู้ติดต่อฉุกเฉิน
+            <a href="/settings" style="margin-left:auto; font-size:12px; color:#1a56a0; text-decoration:none; font-weight:normal; display:flex; align-items:center; gap:4px;">
+                <i class="ti ti-settings"></i> จัดการ
+            </a>
+        </div>
+        {% for c in contacts %}
+        <div class="nc-contact">
+            <div class="nc-contact-name"><i class="ti ti-user"></i> {{ c.name }}</div>
+            <a class="nc-call-btn {% if c.phone == '1669' %}red{% endif %}" href="tel:{{ c.phone }}">
+                <i class="ti ti-phone"></i> โทร
+            </a>
+        </div>
+        {% endfor %}
+        {% if not contacts %}
+        <p style="color:#8a9ab0; font-size:13px; text-align:center; padding:12px;">
+            ยังไม่มีผู้ติดต่อ — <a href="/settings" style="color:#1a56a0;">เพิ่มเลย</a>
+        </p>
+        {% endif %}
+    </div>
+
+    <p class="nc-footer">NiceCare — Elderly Monitoring System &nbsp;·&nbsp; 404 Team Not Found</p>
+</div>
+
+<script>
+    function updateStatus() {
+        fetch('/api/fall-status')
+            .then(r => r.json())
+            .then(data => {
+                const fallValue  = document.getElementById('nc-fall-value');
+                const fallBadge  = document.getElementById('nc-fall-badge');
+                const fallTime   = document.getElementById('nc-fall-time');
+                const fallBanner = document.getElementById('nc-fall-banner');
+                const connStatus = document.getElementById('nc-conn-status');
+
+                fallTime.innerText = data.time;
+                connStatus.innerText = 'อัปเดต ' + new Date().toLocaleTimeString('th-TH');
+
+                if (data.status === 'FALL DETECTED') {
+                    fallValue.className = 'nc-metric-value danger';
+                    fallValue.innerText = 'FALL DETECTED';
+                    fallBadge.className = 'nc-badge red';
+                    fallBadge.innerHTML = '<i class="ti ti-alert-circle"></i> ตรวจพบการล้ม';
+                    fallBanner.style.display = 'flex';
+                } else {
+                    fallValue.className = 'nc-metric-value normal';
+                    fallValue.innerText = 'NORMAL';
+                    fallBadge.className = 'nc-badge green';
+                    fallBadge.innerHTML = '<i class="ti ti-circle-check"></i> ปกติ';
+                    fallBanner.style.display = 'none';
+                }
+            })
+            .catch(() => {
+                document.getElementById('nc-conn-status').innerText = '⚠️ เชื่อมต่อไม่ได้';
+            });
+    }
+
+    updateStatus();
+    setInterval(updateStatus, 3000);
+</script>
 
 </body>
 </html>
