@@ -32,15 +32,19 @@ Camera/Webcam → AI Fall Detection (MediaPipe + OpenCV) → Firebase Realtime D
 ระบบตอนนี้ทำอะไรได้บ้าง
 1. AI Pose Detection
 ใช้ MediaPipe ตรวจจับร่างกายจาก webcam แสดง skeleton / pose landmarks แบบ realtime
+
 2. Fall Detection Logic
 วิเคราะห์ตำแหน่งไหล่และสะโพก ตรวจจับการเปลี่ยนท่าทางที่คล้ายการล้ม
 เปลี่ยนสถานะเป็น:
 NORMAL
 FALL DETECTED
+
 3. Firebase Realtime Update
 ส่งสถานะการล้มเข้า Firebase Realtime Database อัปเดตข้อมูลแบบ realtime
+
 4. Flask Backend
 มี backend API ด้วย Flask Deploy backend บน Render ได้
+
 5. Core Flow Integration
 ระบบสามารถทำ flow หลักได้ดังนี้:
 Camera
@@ -48,11 +52,12 @@ Camera
 → Fall Detection
 → Firebase Update
 → Dashboard / Backend
-6. Demo Prototype
+7. Demo Prototype
 สามารถ demo การตรวจจับการล้มได้ แสดง realtime status ได้
 
 ## Demo link
-Demo link:https : //nicecare-404teamnotfound.onrender.com/
+Demo link: https://nicecare-404teamnotfound.onrender.com
+
 Backup evidence : https://drive.google.com/drive/folders/1cLpCQ9PU3f_upouqT-Q17N-U3uF_Ho2a?usp=sharing
 
 ## Known Issues / Limitations
@@ -80,3 +85,12 @@ Known Issues / LimitationsFirebase realtime update ยังมี delay บา�
 
 ## Sprint 5 Goal
 Sprint 5 Goal ของทีมเราคือ ปรับ Core Flow ของระบบแจ้งเตือนฉุกเฉินให้ผู้ใช้สามารถ “เข้าใจสถานการณ์และตัดสินใจได้ทันที” โดยแก้ปัญหา UI อ่านยาก, ปุ่มไม่ชัด และขาด Action ต่อจาก feedback ใน Sprint 4
+
+## Prototype v2 Scope Lock
+| Must Fix in Sprint 5 | Nice to Have | Not Doing / Later |
+| --- | --- | --- |
+| Typography | Animation Alert | Later |
+| Emergency Button | UI Polish | Later |
+| SOS Label | Microcopy | Later |
+
+## 
