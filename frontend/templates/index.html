@@ -242,12 +242,30 @@
     let backCtx     = ctxB;
     let camFail     = 0;
     let firstFrame  = true;
+    let watchdogId  = null;
+
+    const FRAME_DELAY   = 500;  // 2fps — ลื่นกว่าเร็วๆ ที่ค้างบ่อย
+    const STALL_TIMEOUT = 3000; // ถ้าเฟรมไม่มาภายใน 3 วิ ถือว่าค้าง ยกเลิกแล้วลองใหม่
 
     function fetchFrame() {
         const url = ESP32_URL + "?t=" + Date.now();
         const img = new Image();
+        let settled = false;
+
+        // กันเฟรมค้าง — ถ้ารอนานเกินไปให้เลิกรอแล้วลองเฟรมใหม่ทันที
+        clearTimeout(watchdogId);
+        watchdogId = setTimeout(function() {
+            if (settled) return;
+            settled = true;
+            img.src = ''; // ยกเลิก request เดิม
+            handleFail();
+        }, STALL_TIMEOUT);
 
         img.onload = function() {
+            if (settled) return;
+            settled = true;
+            clearTimeout(watchdogId);
+
             // วาดลง back canvas (ที่ซ่อนอยู่)
             backCanvas.width  = img.naturalWidth  || 320;
             backCanvas.height = img.naturalHeight || 240;
@@ -271,23 +289,32 @@
             }
 
             camFail = 0;
-            // รอให้ ESP32 พักก่อน แล้วดึงเฟรมต่อไป
-            setTimeout(fetchFrame, 150);
+            setTimeout(fetchFrame, FRAME_DELAY);
         };
 
         img.onerror = function() {
-            camFail++;
-            if (camFail >= 3) {
-                camOffline.style.display = 'flex';
-                camText.innerText = 'กล้องออฟไลน์';
-                camStatus.innerText = 'OFFLINE';
-                camBadge.className  = 'nc-badge red';
-                camBadge.innerHTML  = '<i class="ti ti-circle-x"></i> ออฟไลน์';
-            }
-            setTimeout(fetchFrame, 2000);
+            if (settled) return;
+            settled = true;
+            clearTimeout(watchdogId);
+            handleFail();
         };
 
         img.src = url;
+    }
+
+    function handleFail() {
+        camFail++;
+        if (camFail >= 3) {
+            camOffline.style.display = 'flex';
+            camText.innerText = 'กล้องออฟไลน์';
+            camStatus.innerText = 'OFFLINE';
+            camBadge.className  = 'nc-badge red';
+            camBadge.innerHTML  = '<i class="ti ti-circle-x"></i> ออฟไลน์';
+            setTimeout(fetchFrame, 2000);
+        } else {
+            // ลองเฟรมใหม่ทันที ไม่รอ — กันค้างนาน
+            setTimeout(fetchFrame, 100);
+        }
     }
 
     fetchFrame();
