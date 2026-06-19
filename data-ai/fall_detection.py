@@ -14,7 +14,7 @@ from firebase_admin import db
 # IMAGE SOURCE
 # เปลี่ยนจาก ESP32 IP มาดึงจาก Render แทน
 # ESP32 → POST ภาพ → Render (/upload-frame)
-# AI   → GET  ภาพ → Render (/latest-frame)
+# AI   → GET  ภาพ → Render (/video)
 # =========================
 RENDER_URL = "https://nice-care.onrender.com/video"  # Render จะเก็บภาพล่าสุดที่ ESP32 ส่งมา
 
