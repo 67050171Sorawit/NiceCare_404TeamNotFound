@@ -16,7 +16,7 @@ from firebase_admin import db
 # ESP32 → POST ภาพ → Render (/upload-frame)
 # AI   → GET  ภาพ → Render (/latest-frame)
 # =========================
-RENDER_URL = "https://nice-care.onrender.com/latest-frame"
+RENDER_URL = "https://nice-care.onrender.com/video"  # Render จะเก็บภาพล่าสุดที่ ESP32 ส่งมา
 
 # fallback: ถ้าอยากใช้ webcam PC แทน ให้เปลี่ยนเป็น True
 USE_WEBCAM = False
