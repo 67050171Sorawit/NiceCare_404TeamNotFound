@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, Response, jsonify
 import sqlite3
 import os
-import requests
 import time
+import threading
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -19,9 +19,12 @@ app = Flask(
 
 
 # =========================
-# ESP32 CAMERA
+# CAMERA FRAME BUFFER (ESP32 push เข้ามาเก็บไว้ตรงนี้)
 # =========================
-ESP32_URL = "http://10.232.97.34/capture"
+latest_frame = None          # bytes ของภาพล่าสุด
+latest_frame_time = 0        # timestamp ของภาพล่าสุด (วินาที)
+frame_lock = threading.Lock()
+FRAME_STALE_SECONDS = 10      # ถ้าไม่มีภาพใหม่เกิน 10 วิ ถือว่ากล้องออฟไลน์
 
 
 # =========================
@@ -92,33 +95,51 @@ def get_contacts():
 
 
 # =========================
-# CAMERA STREAM
+# CAMERA: ESP32 ส่งภาพเข้ามาที่นี่ (PUSH)
 # =========================
-def generate_frames():
-    while True:
-        try:
-            response = requests.get(ESP32_URL, timeout=0.5)
-            if response.status_code != 200:
-                continue
-            frame = response.content
-            yield (
-                b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n'
-                + frame +
-                b'\r\n'
-            )
-            time.sleep(0.5)
-        except Exception as e:
-            print("STREAM ERROR:", e)
-            continue
+@app.route("/upload-frame", methods=["POST"])
+def upload_frame():
+    """ESP32 เรียก endpoint นี้เป็นระยะ พร้อมแนบไฟล์ JPEG มาด้วย"""
+    global latest_frame, latest_frame_time
+
+    frame_bytes = request.get_data()  # ESP32 ส่งมาเป็น raw JPEG bytes ใน body
+
+    if not frame_bytes:
+        return jsonify({"ok": False, "error": "empty body"}), 400
+
+    with frame_lock:
+        latest_frame = frame_bytes
+        latest_frame_time = time.time()
+
+    return jsonify({"ok": True})
 
 
 @app.route("/video")
 def video():
-    return Response(
-        generate_frames(),
-        mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
+    """Browser ดึงภาพล่าสุดจากที่นี่ — ไม่ได้วิ่งไปหา ESP32 ตรงๆ อีกต่อไป"""
+    with frame_lock:
+        frame = latest_frame
+        age = time.time() - latest_frame_time if latest_frame_time else None
+
+    if frame is None or (age is not None and age > FRAME_STALE_SECONDS):
+        return jsonify({"ok": False, "error": "no recent frame"}), 503
+
+    return Response(frame, mimetype="image/jpeg")
+
+
+@app.route("/api/camera-status")
+def camera_status_api():
+    """Dashboard ใช้เช็คว่ากล้องออนไลน์อยู่ไหม (ภาพมาไม่เกิน 10 วิ)"""
+    with frame_lock:
+        has_frame = latest_frame is not None
+        age = time.time() - latest_frame_time if latest_frame_time else None
+
+    online = has_frame and age is not None and age <= FRAME_STALE_SECONDS
+
+    return jsonify({
+        "online": online,
+        "age_seconds": round(age, 1) if age is not None else None
+    })
 
 
 # =========================

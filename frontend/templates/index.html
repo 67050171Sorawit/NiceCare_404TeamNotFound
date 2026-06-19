@@ -225,7 +225,9 @@
     setInterval(updateStatus, 3000);
 
     // ===== CAMERA: Double-buffer ด้วย Canvas → ไม่กระตุก =====
-    const ESP32_URL   = "http://10.232.97.34/capture";
+    // ดึงจาก Flask /video (เซิร์ฟเวอร์เก็บภาพล่าสุดที่ ESP32 push เข้ามา)
+    // ไม่ยิงตรงไป ESP32 อีกต่อไป → ดูได้จากทุก network ไม่โดน CORS/Private-Network block
+    const ESP32_URL   = "/video";
     const canvasA     = document.getElementById('nc-canvas-a');
     const canvasB     = document.getElementById('nc-canvas-b');
     const camOffline  = document.getElementById('cam-offline');
