@@ -9,17 +9,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background: #f0f4f9; min-height: 100vh; }
 
-        .nc-nav {
-            background: #1a56a0;
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 56px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .nc-nav { background: #1a56a0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
         .nc-logo { color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; }
         .nc-nav-links { display: flex; gap: 4px; }
         .nc-nav-link { color: rgba(255,255,255,0.75); font-size: 13px; padding: 6px 12px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 5px; }
@@ -27,7 +17,6 @@
         .nc-nav-link.active { background: rgba(255,255,255,0.2); color: #fff; }
 
         .nc-body { padding: 24px; max-width: 960px; margin: 0 auto; }
-
         .nc-greeting { font-size: 13px; color: #5a6a7e; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
 
         .nc-pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
@@ -51,8 +40,9 @@
         .nc-card { background: #fff; border: 0.5px solid #d0dbe8; border-radius: 12px; padding: 16px; }
         .nc-card-title { font-size: 13px; font-weight: bold; color: #1a3a5c; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-        .nc-cam { background: #0f172a; border-radius: 8px; overflow: hidden; width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; }
-        .nc-cam img { width: 100%; height: 100%; object-fit: cover; }
+        .nc-cam { background: #0f172a; border-radius: 8px; overflow: hidden; width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; position: relative; }
+        /* ซ้อน 2 canvas — แสดงอันที่โหลดเสร็จ สลับกัน ไม่กระตุก */
+        .nc-cam canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .nc-cam-offline { display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .nc-cam-offline i { font-size: 32px; color: rgba(255,255,255,0.2); }
         .nc-cam-offline span { color: rgba(255,255,255,0.4); font-size: 12px; }
@@ -115,8 +105,8 @@
     <div class="nc-grid">
         <div class="nc-metric">
             <div class="nc-metric-label"><i class="ti ti-camera"></i> Camera Status</div>
-            <div class="nc-metric-value">{{ camera_status }}</div>
-            <span class="nc-badge blue"><i class="ti ti-circle-check"></i> เชื่อมต่อแล้ว</span>
+            <div class="nc-metric-value" id="nc-cam-status">กำลังเชื่อมต่อ...</div>
+            <span class="nc-badge blue" id="nc-cam-badge"><i class="ti ti-loader"></i> รอสักครู่</span>
         </div>
         <div class="nc-metric">
             <div class="nc-metric-label"><i class="ti ti-activity"></i> Fall Detection</div>
@@ -142,12 +132,13 @@
                 <i class="ti ti-video"></i> Live Camera
                 <span class="nc-live"><span class="nc-live-dot"></span>LIVE</span>
             </div>
-            <div class="nc-cam">
-                <img src="/video" alt="ESP32 Camera"
-                    onerror="this.style.display='none'; document.getElementById('cam-offline').style.display='flex';">
-                <div id="cam-offline" class="nc-cam-offline" style="display:none;">
+            <!-- Double-buffer: วาดลง canvas แทน img → ไม่กระตุก -->
+            <div class="nc-cam" id="nc-cam-wrap">
+                <canvas id="nc-canvas-a"></canvas>
+                <canvas id="nc-canvas-b" style="opacity:0;"></canvas>
+                <div id="cam-offline" class="nc-cam-offline">
                     <i class="ti ti-camera-off"></i>
-                    <span>กล้องออฟไลน์</span>
+                    <span id="cam-status-text">กำลังเชื่อมต่อกล้อง...</span>
                 </div>
             </div>
         </div>
@@ -197,6 +188,7 @@
 </div>
 
 <script>
+    // ===== FALL STATUS POLLING =====
     function updateStatus() {
         fetch('/api/fall-status')
             .then(r => r.json())
@@ -231,6 +223,74 @@
 
     updateStatus();
     setInterval(updateStatus, 3000);
+
+    // ===== CAMERA: Double-buffer ด้วย Canvas → ไม่กระตุก =====
+    const ESP32_URL   = "http://10.194.23.33/capture";
+    const canvasA     = document.getElementById('nc-canvas-a');
+    const canvasB     = document.getElementById('nc-canvas-b');
+    const camOffline  = document.getElementById('cam-offline');
+    const camText     = document.getElementById('cam-status-text');
+    const camStatus   = document.getElementById('nc-cam-status');
+    const camBadge    = document.getElementById('nc-cam-badge');
+
+    const ctxA = canvasA.getContext('2d');
+    const ctxB = canvasB.getContext('2d');
+
+    let frontCanvas = canvasA;  // กำลังแสดง
+    let backCanvas  = canvasB;  // กำลังโหลด (hidden)
+    let frontCtx    = ctxA;
+    let backCtx     = ctxB;
+    let camFail     = 0;
+    let firstFrame  = true;
+
+    function fetchFrame() {
+        const url = ESP32_URL + "?t=" + Date.now();
+        const img = new Image();
+
+        img.onload = function() {
+            // วาดลง back canvas (ที่ซ่อนอยู่)
+            backCanvas.width  = img.naturalWidth  || 320;
+            backCanvas.height = img.naturalHeight || 240;
+            backCtx.drawImage(img, 0, 0);
+
+            // สลับ: front ซ่อน, back แสดง — ทันทีโดยไม่มีช่วงว่าง
+            frontCanvas.style.opacity = '0';
+            backCanvas.style.opacity  = '1';
+
+            // swap roles
+            [frontCanvas, backCanvas] = [backCanvas, frontCanvas];
+            [frontCtx,    backCtx   ] = [backCtx,    frontCtx   ];
+
+            // ครั้งแรกซ่อน offline overlay
+            if (firstFrame) {
+                camOffline.style.display = 'none';
+                camStatus.innerText = 'ONLINE';
+                camBadge.className  = 'nc-badge green';
+                camBadge.innerHTML  = '<i class="ti ti-circle-check"></i> เชื่อมต่อแล้ว';
+                firstFrame = false;
+            }
+
+            camFail = 0;
+            // รอให้ ESP32 พักก่อน แล้วดึงเฟรมต่อไป
+            setTimeout(fetchFrame, 150);
+        };
+
+        img.onerror = function() {
+            camFail++;
+            if (camFail >= 3) {
+                camOffline.style.display = 'flex';
+                camText.innerText = 'กล้องออฟไลน์';
+                camStatus.innerText = 'OFFLINE';
+                camBadge.className  = 'nc-badge red';
+                camBadge.innerHTML  = '<i class="ti ti-circle-x"></i> ออฟไลน์';
+            }
+            setTimeout(fetchFrame, 2000);
+        };
+
+        img.src = url;
+    }
+
+    fetchFrame();
 </script>
 
 </body>
