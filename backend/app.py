@@ -3,6 +3,7 @@ import sqlite3
 import os
 import time
 import threading
+import requests
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -16,6 +17,72 @@ app = Flask(
     template_folder='../frontend/templates',
     static_folder='../frontend/static'
 )
+
+
+# =========================
+# LINE MESSAGING API
+# =========================
+# Token เก็บใน Environment Variable บน Render — ไม่เขียนลงโค้ดตรงๆ
+# ตั้งค่าที่ Render Dashboard > Environment > LINE_CHANNEL_ACCESS_TOKEN
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
+LINE_BROADCAST_URL = "https://api.line.me/v2/bot/message/broadcast"
+
+# กันสแปม — ถ้าล้มซ้ำในเวลาสั้นๆ ไม่ต้องแจ้งซ้ำ
+LAST_ALERT_TIME = 0
+ALERT_COOLDOWN_SECONDS = 60
+
+
+def send_line_alert(message_text):
+    """ส่งข้อความแจ้งเตือนแบบ Broadcast ไปหาทุกคนที่แอด NiceCare Alert เป็นเพื่อน"""
+    if not LINE_CHANNEL_ACCESS_TOKEN:
+        print("LINE_CHANNEL_ACCESS_TOKEN ยังไม่ได้ตั้งค่า — ข้ามการแจ้งเตือน")
+        return False
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+    }
+    payload = {
+        "messages": [
+            {"type": "text", "text": message_text}
+        ]
+    }
+
+    try:
+        resp = requests.post(LINE_BROADCAST_URL, headers=headers, json=payload, timeout=5)
+        if resp.status_code == 200:
+            print("LINE alert ส่งสำเร็จ")
+            return True
+        else:
+            print(f"LINE alert ส่งไม่สำเร็จ: {resp.status_code} {resp.text}")
+            return False
+    except Exception as e:
+        print("LINE alert error:", e)
+        return False
+
+
+def maybe_send_fall_alert(fall_status, fall_time):
+    """เรียกทุกครั้งที่เช็คสถานะ — ส่งแจ้งเตือนเฉพาะตอนพบการล้มใหม่ และกันสแปม"""
+    global LAST_ALERT_TIME
+
+    if fall_status != "FALL DETECTED":
+        return
+
+    now = time.time()
+    if now - LAST_ALERT_TIME < ALERT_COOLDOWN_SECONDS:
+        return  # เพิ่งแจ้งไปไม่นาน ข้ามรอบนี้กันสแปม
+
+    LAST_ALERT_TIME = now
+
+    dashboard_url = "https://nice-care.onrender.com/dashboard"
+    message = (
+        "🚨 NiceCare แจ้งเตือน\n"
+        "ตรวจพบการล้ม!\n"
+        f"เวลา: {fall_time}\n"
+        "กรุณาตรวจสอบทันที\n\n"
+        f"ดูกล้องสด: {dashboard_url}"
+    )
+    send_line_alert(message)
 
 
 # =========================
@@ -192,9 +259,14 @@ def fall_status_api():
         ref  = db.reference("/fall_status")
         data = ref.get()
         if data:
+            status = data.get("status", "NORMAL")
+            ftime  = data.get("time",   "-")
+
+            maybe_send_fall_alert(status, ftime)  # ส่ง LINE แจ้งเตือนถ้าล้ม (มี cooldown กันสแปม)
+
             return jsonify({
-                "status": data.get("status", "NORMAL"),
-                "time":   data.get("time",   "-")
+                "status": status,
+                "time":   ftime
             })
     except Exception as e:
         print("Firebase error:", e)
