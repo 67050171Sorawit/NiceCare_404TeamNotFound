@@ -11,9 +11,15 @@ from firebase_admin import db
 
 
 # =========================
-# ESP32 CAMERA
+# IMAGE SOURCE
+# เปลี่ยนจาก ESP32 IP มาดึงจาก Render แทน
+# ESP32 → POST ภาพ → Render (/upload-frame)
+# AI   → GET  ภาพ → Render (/latest-frame)
 # =========================
-ESP32_URL = "http://10.232.97.34/capture"
+RENDER_URL = "https://nice-care.onrender.com/latest-frame"
+
+# fallback: ถ้าอยากใช้ webcam PC แทน ให้เปลี่ยนเป็น True
+USE_WEBCAM = False
 
 
 # =========================
@@ -52,7 +58,14 @@ last_status = "NORMAL"
 last_firebase_update = 0
 FIREBASE_COOLDOWN = 2  # seconds
 
-print("AI STARTED")
+# webcam fallback
+cap = None
+if USE_WEBCAM:
+    cap = cv2.VideoCapture(0)
+    print("AI STARTED (Webcam Mode)")
+else:
+    print("AI STARTED (Render Server Mode)")
+    print(f"Pulling frames from: {RENDER_URL}")
 
 
 # =========================
@@ -63,28 +76,46 @@ while True:
     frame = None
 
     # =========================
-    # GET IMAGE (SAFE VERSION)
+    # GET IMAGE
     # =========================
-    try:
-        response = requests.get(ESP32_URL, timeout=2)
-
-        if response.status_code != 200:
-            print("ESP32 BAD RESPONSE")
+    if USE_WEBCAM:
+        # --- โหมด Webcam PC ---
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            print("WEBCAM ERROR")
             time.sleep(1)
             continue
 
-        img = np.frombuffer(response.content, np.uint8)
-        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+    else:
+        # --- โหมด Render Server ---
+        # Render จะเก็บภาพล่าสุดที่ ESP32 ส่งมา
+        # AI ดึงภาพนั้นมาวิเคราะห์
+        try:
+            response = requests.get(RENDER_URL, timeout=5)
 
-        if frame is None:
-            print("FRAME NULL")
-            time.sleep(1)
+            if response.status_code == 204:
+                # ยังไม่มีภาพจาก ESP32 เลย
+                print("Waiting for ESP32 frame...")
+                time.sleep(2)
+                continue
+
+            if response.status_code != 200:
+                print(f"Server error: {response.status_code}")
+                time.sleep(2)
+                continue
+
+            img = np.frombuffer(response.content, np.uint8)
+            frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+
+            if frame is None:
+                print("FRAME DECODE FAILED")
+                time.sleep(1)
+                continue
+
+        except Exception as e:
+            print("CONNECTION LOST:", e)
+            time.sleep(2)
             continue
-
-    except Exception as e:
-        print("ESP32 LOST:", e)
-        time.sleep(2)
-        continue
 
 
     # =========================
@@ -96,7 +127,6 @@ while True:
     results = pose.process(rgb)
 
     fall_status = "NORMAL"
-
 
     if results.pose_landmarks:
 
@@ -110,7 +140,6 @@ while True:
         hip = results.pose_landmarks.landmark[23]
 
         diff_y = abs(shoulder.y - hip.y)
-
         movement_speed = abs(previous_diff_y - diff_y)
 
         # =========================
@@ -149,7 +178,7 @@ while True:
     # =========================
     # UI
     # =========================
-    color = (0,255,0) if fall_status == "NORMAL" else (0,0,255)
+    color = (0, 255, 0) if fall_status == "NORMAL" else (0, 0, 255)
 
     cv2.putText(
         frame,
@@ -161,10 +190,27 @@ while True:
         3
     )
 
+    # แสดง source ที่กำลังใช้
+    source_label = "Webcam" if USE_WEBCAM else "ESP32 via Render"
+    cv2.putText(
+        frame,
+        f"Source: {source_label}",
+        (20, 90),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.6,
+        (200, 200, 200),
+        1
+    )
+
     cv2.imshow("NiceCare AI", frame)
 
     if cv2.waitKey(1) == 27:
         break
 
 
+# =========================
+# CLEANUP
+# =========================
+if cap:
+    cap.release()
 cv2.destroyAllWindows()
